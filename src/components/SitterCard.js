@@ -5,7 +5,16 @@ function SitterCard({ sitter }) {
   return (
     <article className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-soft transition hover:-translate-y-1 hover:shadow-lg">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <img src={sitter.image} alt={sitter.name} className="h-32 w-32 flex-none rounded-3xl object-cover" />
+        {sitter.image ? (
+          <img src={sitter.image} alt={sitter.name} className="h-32 w-32 flex-none rounded-3xl object-cover" />
+        ) : (
+          <div className="flex h-32 w-32 flex-none items-center justify-center rounded-3xl bg-amber-50">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="32" cy="22" r="10" fill="#FFDCA8" />
+              <path d="M12 52c6-8 20-10 20-10s14 2 20 10c-8 8-20 8-20 8s-12 0-20-8z" fill="#BFEAEA" />
+            </svg>
+          </div>
+        )}
         <div className="flex-1">
           <div className="flex items-center justify-between gap-3">
             <div>
