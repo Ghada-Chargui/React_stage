@@ -70,11 +70,13 @@ function SignupPage({ onSignup }) {
               onClick={() => handleRoleSelect('parent')}
               className="group rounded-[32px] border border-slate-200 bg-white p-6 text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lg"
             >
-              <img
-                src="/images/parent.jpg"
-                alt="Parent avec bébé"
-                className="h-64 w-full rounded-3xl object-cover"
-              />
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[28px] bg-slate-100">
+                <img
+                  src="/images/parent.jpg"
+                  alt="Parent avec bébé"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                />
+              </div>
               <div className="mt-5">
                 <p className="text-sm uppercase tracking-[0.28em] text-amber-600">Parent</p>
                 <h2 className="mt-3 text-2xl font-semibold text-slate-900">Je cherche une baby-sitter</h2>
@@ -86,11 +88,13 @@ function SignupPage({ onSignup }) {
               onClick={() => handleRoleSelect('baby-sitter')}
               className="group rounded-[32px] border border-slate-200 bg-white p-6 text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lg"
             >
-              <img
-                src="/images/babysitter.jpg"
-                alt="Baby-sitter souriante"
-                className="h-64 w-full rounded-3xl object-cover"
-              />
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[28px] bg-slate-100">
+                <img
+                  src="/images/babysitter.jpg"
+                  alt="Baby-sitter souriante"
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                />
+              </div>
               <div className="mt-5">
                 <p className="text-sm uppercase tracking-[0.28em] text-amber-600">Baby-sitter</p>
                 <h2 className="mt-3 text-2xl font-semibold text-slate-900">Je propose mes services</h2>
