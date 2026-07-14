@@ -9,6 +9,7 @@ import HowItWorksPage from './pages/HowItWorksPage';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import RedirectIfAuth from './components/RedirectIfAuth';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -40,6 +41,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-amber-200 selection:text-slate-900">
         <Navbar user={user} setHomeMode={setHomeMode} onLogout={handleLogout} />
         <main className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">

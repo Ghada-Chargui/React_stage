@@ -1,10 +1,26 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import Logo from './Logo';
 
 function Navbar({ user, onLogout }) {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const baseLinkClass = 'transition-colors duration-200 hover:text-amber-600';
+  const activeLinkClass = 'font-semibold text-amber-600 hover:text-amber-700';
+  const inactiveLinkClass = 'text-slate-600 hover:text-amber-600';
+
+  const handleHowItWorksClick = (event) => {
+    event.preventDefault();
+
+    if (location.pathname === '/comment-ca-marche') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      return;
+    }
+
+    navigate('/comment-ca-marche');
+  };
 
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40">
@@ -29,11 +45,18 @@ function Navbar({ user, onLogout }) {
         </button>
 
         <nav className={`${open ? 'block' : 'hidden'} md:flex md:items-center md:gap-4`}>
-          <NavLink to="/" className={({ isActive }) => isActive ? 'text-amber-600 font-semibold' : 'text-slate-600 hover:text-slate-900'}>Accueil</NavLink>
+          <NavLink to="/" className={({ isActive }) => `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}>Accueil</NavLink>
+          <button
+            type="button"
+            onClick={handleHowItWorksClick}
+            className={`${baseLinkClass} ${location.pathname === '/comment-ca-marche' ? activeLinkClass : inactiveLinkClass}`}
+          >
+            Comment ça marche
+          </button>
           {!user && (
             <>
-              <NavLink to="/connexion" className={({ isActive }) => isActive ? 'rounded-full bg-amber-100 px-4 py-2 text-amber-700 font-semibold' : 'rounded-full bg-slate-100 px-4 py-2 text-slate-700 hover:bg-amber-100'}>Connexion</NavLink>
-              <NavLink to="/inscription" className={({ isActive }) => isActive ? 'rounded-full bg-amber-100 px-4 py-2 text-amber-700 font-semibold' : 'rounded-full bg-slate-100 px-4 py-2 text-slate-700 hover:bg-amber-100'}>Inscription</NavLink>
+              <NavLink to="/connexion" className={({ isActive }) => `rounded-full px-4 py-2 transition ${isActive ? 'bg-amber-100 font-semibold text-amber-700 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-700'}`}>Connexion</NavLink>
+              <NavLink to="/inscription" className={({ isActive }) => `rounded-full px-4 py-2 transition ${isActive ? 'bg-amber-100 font-semibold text-amber-700 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-700'}`}>Inscription</NavLink>
             </>
           )}
           {user && (

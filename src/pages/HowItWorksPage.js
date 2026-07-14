@@ -30,11 +30,11 @@ function HowItWorksPage() {
         <div className="rounded-[36px] bg-amber-50 p-8 shadow-soft">
           <div className="space-y-6">
             <h2 className="text-2xl font-semibold text-slate-900">Pourquoi choisir Confi&apos;Sit ?</h2>
-            <p className="text-slate-600">Nous mettons en avant des baby-sitters sélectionnées avec soin, des profils clairs, et une interface simple pour gérer la garde en toute tranquillité.</p>
+            <p className="text-slate-600">Nous sélectionnons avec soin des baby-sitters de confiance, avec des profils clairs et une interface simple pour organiser vos gardes en toute tranquillité.</p>
             <ul className="space-y-4 text-slate-700">
-              <li className="rounded-3xl bg-white p-5 shadow-sm">Profils locaux et adaptés aux quartiers de Tunis et banlieue.</li>
-              <li className="rounded-3xl bg-white p-5 shadow-sm">Filtres utiles pour trouver la personne idéale rapidement.</li>
-              <li className="rounded-3xl bg-white p-5 shadow-sm">Design moderne, sérieux et accessible depuis mobile.</li>
+              <li className="rounded-3xl bg-white p-5 shadow-sm">Un réseau de baby-sitters couvrant l'ensemble des quartiers de Tunis et sa périphérie.</li>
+              <li className="rounded-3xl bg-white p-5 shadow-sm">Des critères de recherche précis pour identifier rapidement le profil adapté à vos besoins.</li>
+              <li className="rounded-3xl bg-white p-5 shadow-sm">Une plateforme moderne, sécurisée et accessible sur tous vos appareils.</li>
             </ul>
           </div>
         </div>
@@ -49,20 +49,6 @@ function HowItWorksPage() {
         </div>
       </div>
 
-      <div className="rounded-[36px] bg-white p-8 shadow-soft">
-        <h2 className="text-2xl font-semibold text-slate-900">Une application prête à évoluer</h2>
-        <p className="mt-4 text-slate-600">Ce template frontend utilise des données mockées en local. Il est conçu pour être connecté facilement à un backend plus tard, grâce à des composants réutilisables et une structure claire.</p>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          <div className="rounded-3xl bg-slate-50 p-6">
-            <h3 className="font-semibold text-slate-900">Composants réutilisables</h3>
-            <p className="mt-3 text-sm text-slate-600">Navbar, listes, cartes de profils et formulaires sont prêts pour une intégration backend.</p>
-          </div>
-          <div className="rounded-3xl bg-slate-50 p-6">
-            <h3 className="font-semibold text-slate-900">Données mockées</h3>
-            <p className="mt-3 text-sm text-slate-600">Les profils, les filtres et les avis sont stockés en local dans un fichier JS simple et extensible.</p>
-          </div>
-        </div>
-      </div>
     </section>
   );
 }

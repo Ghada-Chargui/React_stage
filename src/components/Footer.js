@@ -15,9 +15,7 @@ function Footer() {
           </div>
         </div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8">
-          <Link to="/recherche" className="text-slate-700 hover:text-slate-900">Trouver</Link>
           <Link to="/inscription" className="text-slate-700 hover:text-slate-900">S’inscrire</Link>
-          <Link to="/comment-ca-marche" className="text-slate-700 hover:text-slate-900">Comment ça marche</Link>
         </div>
       </div>
       <div className="mt-8 border-t border-slate-200 pt-6 text-center text-sm text-slate-500">

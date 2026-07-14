@@ -73,7 +73,7 @@ function ImageCarousel() {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative h-[320px] sm:h-[360px] md:h-[400px]">
+      <div className="relative h-[340px] sm:h-[380px] md:h-[430px]">
         {slides.map((slide, index) => (
           <div
             key={slide.alt}
@@ -84,10 +84,12 @@ function ImageCarousel() {
               alt={slide.alt}
               className="max-h-full w-full object-contain object-center"
             />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/50 to-transparent px-5 py-5 text-white">
-              <p className="text-sm uppercase tracking-[0.24em] text-amber-200">Confi&apos;Sit</p>
-              <h3 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">{slide.title}</h3>
-              <p className="mt-2 max-w-xl text-sm text-slate-100 sm:text-base">{slide.description}</p>
+            <div className="absolute inset-x-0 top-0 flex h-full items-start bg-gradient-to-b from-slate-950/30 via-slate-950/10 to-slate-950/60 px-5 pb-20 pt-5 text-white">
+              <div className="max-w-[85%]">
+                <p className="text-sm uppercase tracking-[0.24em] text-amber-200">Confi&apos;Sit</p>
+                <h3 className="mt-2 text-xl font-semibold tracking-tight sm:text-2xl">{slide.title}</h3>
+                <p className="mt-2 max-w-xl text-sm text-slate-100 sm:text-base">{slide.description}</p>
+              </div>
             </div>
           </div>
         ))}
@@ -100,7 +102,7 @@ function ImageCarousel() {
             type="button"
             aria-label={`Afficher la diapositive ${index + 1}`}
             onClick={() => goToSlide(index)}
-            className={`h-3 w-3 rounded-full transition-all duration-300 ${index === activeIndex ? 'bg-amber-500 shadow-soft' : 'bg-white/80 ring-1 ring-slate-200 hover:bg-white'}`}
+            className={`h-2.5 w-2.5 rounded-full border border-white/70 transition-all duration-300 ${index === activeIndex ? 'scale-110 bg-amber-500 shadow-sm' : 'bg-slate-300/80 hover:bg-slate-200'}`}
           />
         ))}
       </div>

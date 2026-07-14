@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ImageCarousel from '../components/ImageCarousel';
+import HowItWorksPage from './HowItWorksPage';
+import heroImage from '../assets/logo.png';
 
 function HomePage({ user, homeMode, setHomeMode }) {
 
@@ -28,12 +30,18 @@ function HomePage({ user, homeMode, setHomeMode }) {
   }
 
   return (
-    <section className="space-y-16 py-10 lg:py-16">
-      <div className="rounded-[36px] bg-gradient-to-br from-amber-50 via-white to-slate-100 p-8 shadow-soft lg:p-16">
+    <section className="space-y-10 pt-0 pb-8 sm:space-y-12 sm:pb-10 lg:space-y-16 lg:pb-12">
+      <div className="rounded-[36px] bg-gradient-to-br from-amber-50 via-white to-slate-100 p-5 shadow-soft sm:p-7 lg:p-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_420px] lg:items-center">
           <div className="space-y-6">
-            <span className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-amber-700">Confi&apos;Sit</span>
-            <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
+            <div className="mb-2 flex justify-center sm:justify-start">
+              <img
+                src={heroImage}
+                alt="Confi'Sit"
+                className="h-40 w-auto max-w-full object-contain sm:h-52 lg:h-64"
+              />
+            </div>
+            <h1 className="mt-1 max-w-3xl text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
               Confiez vos enfants en toute sérénité, où que vous soyez en Tunisie.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-600">
@@ -50,6 +58,7 @@ function HomePage({ user, homeMode, setHomeMode }) {
               >
                 Se connecter
               </Link>
+            
             </div>
           </div>
           <div className="rounded-[32px] bg-white p-6 shadow-soft sm:p-8">
@@ -69,6 +78,10 @@ function HomePage({ user, homeMode, setHomeMode }) {
               <ImageCarousel />
             </div>
           </div>
+        </div>
+
+        <div id="comment-ca-marche" className="scroll-mt-24">
+          <HowItWorksPage />
         </div>
 
         <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-center">

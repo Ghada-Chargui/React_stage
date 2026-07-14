@@ -90,11 +90,6 @@ function LoginPage({ onLogin }) {
         </form>
         {error && <div className="mt-6"><AuthNotice type="error">{error}</AuthNotice></div>}
         {notice && <div className="mt-6"><AuthNotice type="success">{notice}</AuthNotice></div>}
-
-        <div className="mt-8 rounded-3xl bg-slate-50 p-5 text-slate-600 sm:p-6">
-          <p className="text-sm font-semibold text-slate-900">Connexion factice</p>
-          <p className="mt-2 text-sm">Cette page simule un accès utilisateur sans authentification réelle. Elle est prête à être connectée à un backend plus tard.</p>
-        </div>
       </div>
     </section>
   );
