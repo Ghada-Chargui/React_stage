@@ -8,6 +8,7 @@ import LoginPage from './pages/LoginPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import RedirectIfAuth from './components/RedirectIfAuth';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -57,9 +58,9 @@ function App() {
             />
             <Route path="/recherche" element={<SearchPage />} />
             <Route path="/profil/:id" element={<SitterProfilePage />} />
-            <Route path="/inscription" element={<SignupPage onSignup={handleLogin} />} />
-            <Route path="/connexion" element={<LoginPage onLogin={handleLogin} />} />
-            
+            <Route path="/inscription" element={<RedirectIfAuth><SignupPage onSignup={handleLogin} /></RedirectIfAuth>} />
+            <Route path="/connexion" element={<RedirectIfAuth><LoginPage onLogin={handleLogin} /></RedirectIfAuth>} />
+            <Route path="/mot-de-passe-oublie" element={<div className="mx-auto max-w-2xl rounded-[32px] bg-white p-6 shadow-soft sm:p-8"><h1 className="text-3xl font-semibold text-slate-900">Mot de passe oublié</h1><p className="mt-3 text-slate-600">Si un compte existe avec cet email, un lien de réinitialisation sera envoyé.</p><form className="mt-6 grid gap-4"><label htmlFor="forgot-email" className="text-sm font-semibold text-slate-700">Email</label><input id="forgot-email" type="email" placeholder="exemple@mail.com" className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200" /><button type="button" className="w-full rounded-full bg-orange-600 px-6 py-4 text-base font-semibold text-white shadow-soft transition hover:bg-orange-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-400 sm:w-auto">Envoyer le lien</button></form></div>} />
             <Route path="/comment-ca-marche" element={<HowItWorksPage />} />
           </Routes>
         </main>

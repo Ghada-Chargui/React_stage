@@ -8,6 +8,8 @@
     'Segoe UI', sans-serif;
   background-color: #f8fafc;
   color: #0f172a;
+  --accent: #c2410c;
+  --accent-soft: #ffedd5;
 }
 
 html {
@@ -30,6 +32,14 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
 }
 
 ::selection {
