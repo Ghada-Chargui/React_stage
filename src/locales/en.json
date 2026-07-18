@@ -4,7 +4,18 @@
     "howItWorks": "How it works",
     "login": "Login",
     "signup": "Sign up",
-    "logout": "Logout"
+    "logout": "Logout",
+    "brandSubtitle": "Trusted babysitting",
+    "language": "Language",
+    "languageLabel": "Choose language",
+    "languages": {
+      "fr": "FR",
+      "en": "EN",
+      "ar": "AR"
+    },
+    "toggleTheme": "Toggle theme",
+    "toggleNavigation": "Toggle navigation",
+    "greeting": "Hello, {{name}}"
   },
   "hero": {
     "title": "Entrust your children with complete peace of mind, anywhere in Tunisia.",
@@ -19,7 +30,8 @@
     "tag": "Who we are",
     "title": "Our mission: connect families with trusted babysitters.",
     "description1": "Confi'Sit supports parents and babysitters with a focus on security, simplicity, and proximity. We offer a modern and reassuring service to organize peaceful care, throughout Tunisia.",
-    "description2": "Our vision is to create a local community where every parent finds the right support for their child and every babysitter builds a trusting relationship with families."
+    "description2": "Our vision is to create a local community where every parent finds the right support for their child and every babysitter builds a trusting relationship with families.",
+    "imageAlt": "Smiling baby"
   },
   "howItWorks": {
     "tag": "How it works",
@@ -129,10 +141,15 @@
       "tag": "Sign up",
       "title": "Join Confi'Sit as a parent or babysitter.",
       "subtitle": "Choose your profile to see the right form.",
+      "roleLabel": "Role:",
+      "roleChoose": "To choose",
       "roleParent": "Parent",
       "roleParentDescription": "I'm looking for a babysitter",
+      "roleParentHelp": "Create an account to publish your requests and browse reliable profiles.",
       "roleBabysitter": "Babysitter",
       "roleBabysitterDescription": "I offer my services",
+      "roleBabysitterHelp": "Join the community and find families near you.",
+      "tagStep": "Sign up {{role}}",
       "tagStepParent": "Parent sign up",
       "tagStepBabysitter": "Babysitter sign up",
       "formDescription": "Complete the form to finalize your account.",

@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Star, Clock3, DollarSign } from 'lucide-react';
 
 function SitterCard({ sitter }) {
+  const { t } = useTranslation();
   return (
     <article className="rounded-3xl border border-slate-100 bg-white p-7 shadow-[0_20px_60px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_80px_rgba(249,115,22,0.12)] hover:scale-[1.01] dark:border-slate-700 dark:bg-slate-900 dark:shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -25,8 +27,8 @@ function SitterCard({ sitter }) {
           </div>
           <div className="mt-5 grid gap-4 text-sm text-slate-600 dark:text-slate-300 sm:grid-cols-2">
             <div className="flex items-center gap-2"><MapPin size={18} /> {sitter.location}</div>
-            <div className="flex items-center gap-2"><DollarSign size={18} /> {sitter.rate} TND / h</div>
-            <div className="flex items-center gap-2"><Clock3 size={18} /> {sitter.experience} ans d’expérience</div>
+            <div className="flex items-center gap-2"><DollarSign size={18} /> {t('search.sitterCard.rate', { rate: sitter.rate })}</div>
+            <div className="flex items-center gap-2"><Clock3 size={18} /> {t('search.sitterCard.experience', { experience: sitter.experience })}</div>
           </div>
         </div>
       </div>
@@ -40,10 +42,10 @@ function SitterCard({ sitter }) {
           to={`/profil/${sitter.id}`}
           className="rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_15px_40px_rgba(249,115,22,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_50px_rgba(249,115,22,0.35)]"
         >
-          Voir le profil
+          {t('search.sitterCard.viewProfile')}
         </Link>
         <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2.5 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-          <Star size={18} className="text-amber-500" /> {sitter.reviews.length} avis
+          <Star size={18} className="text-amber-500" /> {t('search.sitterCard.reviews', { count: sitter.reviews.length })}
         </div>
       </div>
     </article>

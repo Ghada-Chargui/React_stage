@@ -4,7 +4,18 @@
     "howItWorks": "Comment ça marche",
     "login": "Connexion",
     "signup": "Inscription",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "brandSubtitle": "Baby-sitting confiance",
+    "language": "Langue",
+    "languageLabel": "Choisir la langue",
+    "languages": {
+      "fr": "FR",
+      "en": "EN",
+      "ar": "AR"
+    },
+    "toggleTheme": "Changer le thème",
+    "toggleNavigation": "Afficher le menu",
+    "greeting": "Bonjour, {{name}}"
   },
   "hero": {
     "title": "Confiez vos enfants en toute sérénité, où que vous soyez en Tunisie.",
@@ -19,7 +30,8 @@
     "tag": "Qui sommes-nous",
     "title": "Notre mission : connecter les familles avec des baby-sitters de confiance.",
     "description1": "Confi'Sit accompagne parents et baby-sitters avec une approche centrée sur la sécurité, la simplicité et la proximité. Nous proposons un service moderne et rassurant pour organiser des gardes sereines, partout en Tunisie.",
-    "description2": "Notre vision est de créer une communauté locale où chaque parent trouve le bon accompagnement pour son enfant et chaque baby-sitter développe une relation de confiance avec les familles."
+    "description2": "Notre vision est de créer une communauté locale où chaque parent trouve le bon accompagnement pour son enfant et chaque baby-sitter développe une relation de confiance avec les familles.",
+    "imageAlt": "Bébé souriant"
   },
   "howItWorks": {
     "tag": "Comment ça marche",
@@ -129,10 +141,15 @@
       "tag": "Inscription",
       "title": "Rejoignez Confi'Sit en tant que parent ou baby-sitter.",
       "subtitle": "Choisissez votre profil pour afficher le bon formulaire.",
+      "roleLabel": "Rôle :",
+      "roleChoose": "À choisir",
       "roleParent": "Parent",
       "roleParentDescription": "Je cherche une baby-sitter",
+      "roleParentHelp": "Créez un compte pour publier vos demandes et consulter des profils fiables.",
       "roleBabysitter": "Baby-sitter",
       "roleBabysitterDescription": "Je propose mes services",
+      "roleBabysitterHelp": "Rejoignez la communauté et trouvez des familles près de chez vous.",
+      "tagStep": "Inscription {{role}}",
       "tagStepParent": "Inscription Parent",
       "tagStepBabysitter": "Inscription Baby-sitter",
       "formDescription": "Complétez le formulaire pour finaliser votre compte.",

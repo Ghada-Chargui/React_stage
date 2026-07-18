@@ -16,10 +16,17 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    supportedLngs: ['fr', 'en', 'ar'],
     fallbackLng: 'fr',
-    debug: false,
+    lng: 'fr',
+    load: 'languageOnly',
     interpolation: {
       escapeValue: false
+    },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'confiSitLanguage'
     },
     react: {
       useSuspense: false
