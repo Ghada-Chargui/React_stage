@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { saveStoredCurrentUser } from '../../utils/storage';
 
 function BabysitterProfilePage() {
   const [profile, setProfile] = useState({
@@ -28,7 +29,7 @@ function BabysitterProfilePage() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const nextUser = { ...JSON.parse(localStorage.getItem('confiSitUser') || '{}'), ...profile, availability: profile.availability.split(',').map((item) => item.trim()).filter(Boolean) };
-    localStorage.setItem('confiSitUser', JSON.stringify(nextUser));
+    saveStoredCurrentUser(nextUser);
     window.location.reload();
   };
 

@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AuthNotice from '../components/AuthNotice';
 import PasswordInput from '../components/PasswordInput';
+import { persistUserAccount, getStoredUsers } from '../utils/storage';
 
 function SignupPage({ onSignup }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [role, setRole] = useState(null);
   const [step, setStep] = useState('choose');
-  const [form, setForm] = useState({ nom: '', email: '', phone: '', quartier: '', experience: '', bio: '', password: '', passwordConfirm: '' });
+  const [form, setForm] = useState({ nom: '', email: '', phone: '', quartier: '', zone: '', experience: '', bio: '', hourlyRate: '', languages: [], availability: '', password: '', passwordConfirm: '' });
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,6 +26,12 @@ function SignupPage({ onSignup }) {
   };
 
   const handleChange = (field) => (event) => {
+    if (field === 'languages') {
+      const value = event.target.value;
+      setForm((current) => ({ ...current, languages: current.languages.includes(value) ? current.languages.filter((item) => item !== value) : [...current.languages, value] }));
+      return;
+    }
+
     setForm((current) => ({ ...current, [field]: event.target.value }));
     if (errors[field]) {
       setErrors((current) => ({ ...current, [field]: null }));
@@ -38,22 +45,45 @@ function SignupPage({ onSignup }) {
   const handleSubmit = (event) => {
     event.preventDefault();
     const e = {};
-    const usersRaw = localStorage.getItem('confiSitUsers');
-    const users = usersRaw ? JSON.parse(usersRaw) : {};
+    const users = getStoredUsers();
 
     if (!form.password || form.password.length < 8) e.password = t('auth.signup.fields.passwordError');
     if (form.password !== form.passwordConfirm) e.passwordConfirm = t('auth.signup.fields.passwordConfirmError');
     if (users[form.email]) e.email = t('auth.signup.fields.emailError');
+    if (role === 'babysitter') {
+      if (!form.zone) e.zone = 'La zone est requise';
+      if (!form.hourlyRate) e.hourlyRate = 'Le tarif horaire est requis';
+      if (!form.experience) e.experience = 'L’expérience est requise';
+      if (!form.bio) e.bio = 'La bio est requise';
+      if (!form.availability) e.availability = 'Au moins une disponibilité est requise';
+      if (!form.languages.length) e.languages = 'Sélectionnez au moins une langue';
+      if (!form.photo) e.photo = 'Une photo est requise';
+    }
     setErrors(e);
     if (Object.keys(e).length) return;
 
     setIsSubmitting(true);
     window.setTimeout(() => {
-      const user = { nom: form.nom, email: form.email, phone: form.phone, quartier: form.quartier, experience: form.experience, bio: form.bio, password: form.password, role };
-      users[user.email] = user;
-      localStorage.setItem('confiSitUsers', JSON.stringify(users));
+      const account = {
+        name: form.nom,
+        nom: form.nom,
+        email: form.email,
+        phone: form.phone,
+        quartier: form.quartier,
+        address: role === 'babysitter' ? form.zone : form.quartier,
+        zone: role === 'babysitter' ? form.zone : 'Tunis',
+        experience: form.experience,
+        hourlyRate: form.hourlyRate,
+        availability: role === 'babysitter' ? form.availability.split(',').map((item) => item.trim()).filter(Boolean) : ['Matin'],
+        languages: role === 'babysitter' ? form.languages : ['Français'],
+        bio: form.bio,
+        photo: form.photo || '',
+        password: form.password,
+        role,
+      };
+      const savedAccount = persistUserAccount(account, { persistSession: false });
 
-      if (onSignup) onSignup({ name: user.nom, email: user.email, role: user.role });
+      if (onSignup) onSignup({ name: savedAccount.name, email: savedAccount.email, role: savedAccount.role });
       setNotice(t('auth.notice.success'));
       setIsSubmitting(false);
       navigate('/connexion');
@@ -172,14 +202,61 @@ function SignupPage({ onSignup }) {
                 <input id="signup-quartier" value={form.quartier} onChange={handleChange('quartier')} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30" placeholder={t('auth.signup.fields.neighborhoodPlaceholder')} required />
               </div>
               {role === 'babysitter' && (
+                <div className="space-y-5">
+                  <label htmlFor="signup-zone" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Adresse / zone géographique</label>
+                  <input id="signup-zone" value={form.zone} onChange={handleChange('zone')} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30" placeholder="Ex. Carthage, La Soukra" required />
+                  {errors.zone && <p className="mt-1 text-sm text-red-600">{errors.zone}</p>}
+                </div>
+              )}
+              {role === 'babysitter' && (
                 <>
+                  <div className="space-y-5">
+                    <label htmlFor="signup-photo" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Photo de profil</label>
+                    <input id="signup-photo" type="file" accept="image/*" onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setForm((current) => ({ ...current, photo: reader.result }));
+                      };
+                      reader.readAsDataURL(file);
+                    }} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30" required />
+                    {errors.photo && <p className="mt-1 text-sm text-red-600">{errors.photo}</p>}
+                  </div>
+                  <div className="space-y-5">
+                    <label htmlFor="signup-hourly-rate" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Tarif horaire (TND/h)</label>
+                    <input id="signup-hourly-rate" value={form.hourlyRate} onChange={handleChange('hourlyRate')} type="number" min="0" className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30" placeholder="35" required />
+                    {errors.hourlyRate && <p className="mt-1 text-sm text-red-600">{errors.hourlyRate}</p>}
+                  </div>
                   <div className="space-y-5">
                     <label htmlFor="signup-experience" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">{t('auth.signup.fields.experience')}</label>
                     <input id="signup-experience" value={form.experience} onChange={handleChange('experience')} type="number" min="0" className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30" placeholder={t('auth.signup.fields.experiencePlaceholder')} required />
+                    {errors.experience && <p className="mt-1 text-sm text-red-600">{errors.experience}</p>}
                   </div>
                   <div className="space-y-5">
+                    <label htmlFor="signup-availability" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Disponibilités</label>
+                    <input id="signup-availability" value={form.availability} onChange={handleChange('availability')} className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30" placeholder="Matin, Soirée" required />
+                    {errors.availability && <p className="mt-1 text-sm text-red-600">{errors.availability}</p>}
+                  </div>
+                  <div className="space-y-5 md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Langues parlées</label>
+                    <div className="flex flex-wrap gap-3">
+                      {['Français', 'Arabe', 'Anglais', 'Italien', 'Espagnol'].map((language) => {
+                        const checked = form.languages.includes(language);
+                        return (
+                          <label key={language} className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${checked ? 'border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-500/40 dark:bg-orange-900/20 dark:text-orange-300' : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}>
+                            <input type="checkbox" value={language} checked={checked} onChange={handleChange('languages')} className="sr-only" />
+                            <span>{language}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {errors.languages && <p className="mt-1 text-sm text-red-600">{errors.languages}</p>}
+                  </div>
+                  <div className="space-y-5 md:col-span-2">
                     <label htmlFor="signup-bio" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">{t('auth.signup.fields.bio')}</label>
                     <textarea id="signup-bio" value={form.bio} onChange={handleChange('bio')} rows="4" className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-3.5 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30" placeholder={t('auth.signup.fields.bioPlaceholder')} required />
+                    {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio}</p>}
                   </div>
                 </>
               )}

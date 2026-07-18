@@ -1,23 +1,34 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { sitters, neighborhoods, availabilities } from '../../data/mockSitters';
+import { getBabysitterProfiles, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
 function ParentSearchPage() {
   const navigate = useNavigate();
+  const [sitters, setSitters] = useState(() => getBabysitterProfiles());
   const [zone, setZone] = useState('');
   const [rate, setRate] = useState(80);
   const [minRating, setMinRating] = useState(4.5);
   const [availability, setAvailability] = useState('');
+
+  useEffect(() => {
+    const syncSitters = () => setSitters(getBabysitterProfiles());
+    syncSitters();
+    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncSitters);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncSitters);
+  }, []);
+
+  const zones = useMemo(() => Array.from(new Set(sitters.map((sitter) => sitter.location).filter(Boolean))), [sitters]);
+  const availabilities = useMemo(() => Array.from(new Set(sitters.flatMap((sitter) => sitter.availability || []))), [sitters]);
 
   const filteredSitters = useMemo(() => {
     return sitters.filter((sitter) => {
       const matchesZone = !zone || sitter.location === zone;
       const matchesRate = sitter.rate <= rate;
       const matchesRating = sitter.rating >= minRating;
-      const matchesAvailability = !availability || sitter.availability.includes(availability);
+      const matchesAvailability = !availability || (sitter.availability || []).includes(availability);
       return matchesZone && matchesRate && matchesRating && matchesAvailability;
     });
-  }, [zone, rate, minRating, availability]);
+  }, [availability, rate, minRating, sitters, zone]);
 
   return (
     <div className="space-y-6">
@@ -29,7 +40,7 @@ function ParentSearchPage() {
             Zone
             <select value={zone} onChange={(event) => setZone(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
               <option value="">Toutes</option>
-              {neighborhoods.map((item) => <option key={item} value={item}>{item}</option>)}
+              {zones.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">

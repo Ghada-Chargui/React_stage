@@ -16,11 +16,14 @@ import BabysitterDashboardPage from './pages/babysitter/BabysitterDashboardPage'
 import BabysitterProfilePage from './pages/babysitter/BabysitterProfilePage';
 import BabysitterRequestsPage from './pages/babysitter/BabysitterRequestsPage';
 import BabysitterReviewsPage from './pages/babysitter/BabysitterReviewsPage';
+import AdminPage from './pages/AdminPage';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import RedirectIfAuth from './components/RedirectIfAuth';
 import PrivateRoute from './components/PrivateRoute';
 import ScrollToTop from './components/ScrollToTop';
+import { initializeAdminDemoData } from './data/adminMockData';
+import { getStoredCurrentUser, normalizeRole, persistUserAccount, saveStoredCurrentUser } from './utils/storage';
 
 function AppContent() {
   const { i18n, t } = useTranslation();
@@ -92,22 +95,16 @@ function AppContent() {
   }, [i18n]);
 
   useEffect(() => {
-    try {
-      const storageUser = localStorage.getItem('confiSitUser');
-      if (storageUser) {
-        const parsed = JSON.parse(storageUser);
-        if (parsed && typeof parsed === 'object') {
-          setUser(parsed);
-          setHomeMode('member');
-        }
-      }
-    } catch {
-      localStorage.removeItem('confiSitUser');
+    initializeAdminDemoData();
+    const storedUser = getStoredCurrentUser();
+    if (storedUser) {
+      setUser(storedUser);
+      setHomeMode('member');
     }
   }, []);
 
   const handleLogin = (credentials) => {
-    const normalizedRole = credentials?.role === 'baby-sitter' || credentials?.role === 'babysitter' ? 'babysitter' : (credentials?.role || 'parent');
+    const normalizedRole = normalizeRole(credentials?.role);
     const nextUser = {
       name: credentials.name || 'Utilisateur',
       email: credentials.email,
@@ -122,11 +119,13 @@ function AppContent() {
       experience: credentials.experience || 3,
       photo: credentials.photo || '',
     };
-    localStorage.setItem('confiSitUser', JSON.stringify(nextUser));
+    persistUserAccount(nextUser, { persistSession: true });
     setUser(nextUser);
     setHomeMode('member');
 
-    if (nextUser.role === 'babysitter') {
+    if (nextUser.role === 'admin') {
+      navigate('/espace-admin');
+    } else if (nextUser.role === 'babysitter') {
       navigate('/espace-babysitter');
     } else {
       navigate('/espace-parent');
@@ -134,7 +133,7 @@ function AppContent() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('confiSitUser');
+    saveStoredCurrentUser(null);
     setUser(null);
     setHomeMode('hero');
   };
@@ -185,6 +184,12 @@ function AppContent() {
               }
             />
             <Route path="/comment-ca-marche" element={<HowItWorksPage />} />
+            <Route path="/espace-admin" element={<PrivateRoute requiredRole="admin"><AdminPage user={user} /></PrivateRoute>}>
+              <Route index element={<div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"><p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">Tableau de bord</p><h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Bienvenue dans l’espace admin</h2></div>} />
+              <Route path="statistiques" element={<div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"><p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">Statistiques</p><h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Analyse détaillée de la plateforme</h2></div>} />
+              <Route path="profils" element={<div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"><p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">Profils</p><h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Gérez les utilisateurs et leurs profils</h2></div>} />
+              <Route path="reclamations" element={<div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"><p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">Réclamations</p><h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Traitez les signalements du support</h2></div>} />
+            </Route>
             <Route path="/espace-parent" element={<PrivateRoute requiredRole="parent"><ParentDashboardPage user={user} /></PrivateRoute>}>
               <Route index element={<div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"><p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">Tableau de bord</p><h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Bienvenue dans votre espace parent</h2></div>} />
               <Route path="recherche" element={<ParentSearchPage />} />

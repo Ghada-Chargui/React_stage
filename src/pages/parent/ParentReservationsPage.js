@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { sitters } from '../../data/mockSitters';
+import { getBabysitterProfiles, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
 function ParentReservationsPage() {
   const [reservations, setReservations] = useState([]);
-  const [form, setForm] = useState({ sitterId: sitters[0]?.id || '', date: '', hour: '', duration: '3', address: '' });
+  const [sitters, setSitters] = useState(() => getBabysitterProfiles());
+  const [form, setForm] = useState({ sitterId: '', date: '', hour: '', duration: '3', address: '' });
 
   useEffect(() => {
     const stored = localStorage.getItem('confiSitParentReservations');
@@ -11,6 +12,19 @@ function ParentReservationsPage() {
       setReservations(JSON.parse(stored));
     }
   }, []);
+
+  useEffect(() => {
+    const syncSitters = () => setSitters(getBabysitterProfiles());
+    syncSitters();
+    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncSitters);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncSitters);
+  }, []);
+
+  useEffect(() => {
+    if (!form.sitterId && sitters[0]?.id) {
+      setForm((current) => ({ ...current, sitterId: sitters[0].id }));
+    }
+  }, [form.sitterId, sitters]);
 
   useEffect(() => {
     localStorage.setItem('confiSitParentReservations', JSON.stringify(reservations));

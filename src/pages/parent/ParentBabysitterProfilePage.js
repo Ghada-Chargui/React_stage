@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { sitters } from '../../data/mockSitters';
+import { getBabysitterProfiles } from '../../utils/storage';
 
 function ParentBabysitterProfilePage() {
   const { id } = useParams();
-  const sitter = useMemo(() => sitters.find((item) => item.id === id), [id]);
+  const sitter = useMemo(() => getBabysitterProfiles().find((item) => item.id === id), [id]);
 
   if (!sitter) {
     return (

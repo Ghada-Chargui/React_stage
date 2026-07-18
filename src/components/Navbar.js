@@ -66,7 +66,12 @@ function Navbar({ user, onLogout, theme, toggleTheme, changeLanguage, currentLng
         </button>
 
         <nav className={`${open ? 'block' : 'hidden'} md:flex md:items-center md:gap-4`}>
-          <NavLink to="/" className={getAccueilClass}>{t('nav.home')}</NavLink>
+          {!user && <NavLink to="/" className={getAccueilClass}>{t('nav.home')}</NavLink>}
+          {user && (
+            <NavLink to={user.role === 'babysitter' ? '/espace-babysitter' : user.role === 'admin' ? '/espace-admin' : '/espace-parent'} className={getAccueilClass}>
+              {user.role === 'babysitter' ? 'Espace babysitter' : user.role === 'admin' ? 'Espace admin' : 'Espace parent'}
+            </NavLink>
+          )}
           <button
             type="button"
             onClick={handleHowItWorksClick}

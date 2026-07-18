@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { saveStoredCurrentUser } from '../../utils/storage';
 
 function ParentProfilePage() {
   const [profile, setProfile] = useState({
@@ -26,7 +27,7 @@ function ParentProfilePage() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const nextUser = { ...JSON.parse(localStorage.getItem('confiSitUser') || '{}'), ...profile };
-    localStorage.setItem('confiSitUser', JSON.stringify(nextUser));
+    saveStoredCurrentUser(nextUser);
     window.location.reload();
   };
 

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AuthNotice from '../components/AuthNotice';
 import PasswordInput from '../components/PasswordInput';
+import { getStoredUsers, persistUserAccount } from '../utils/storage';
 
 function LoginPage({ onLogin }) {
   const { t } = useTranslation();
@@ -24,8 +25,12 @@ function LoginPage({ onLogin }) {
     setIsSubmitting(true);
 
     window.setTimeout(() => {
-      const usersRaw = localStorage.getItem('confiSitUsers');
-      const users = usersRaw ? JSON.parse(usersRaw) : {};
+      const users = getStoredUsers();
+      if (!users || Object.keys(users).length === 0) {
+        setError(t('auth.login.errorNoAccount'));
+        setIsSubmitting(false);
+        return;
+      }
       const u = users[credentials.email];
       if (!u) {
         setError(t('auth.login.errorNoAccount'));
@@ -38,7 +43,7 @@ function LoginPage({ onLogin }) {
         return;
       }
 
-      const nextUser = { name: u.nom || u.name || 'Utilisateur', email: u.email, role: u.role };
+      const nextUser = persistUserAccount(u);
       if (onLogin) onLogin(nextUser);
       setNotice(t('auth.login.success'));
       setIsSubmitting(false);

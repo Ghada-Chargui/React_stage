@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ImageCarousel from '../components/ImageCarousel';
@@ -9,29 +9,8 @@ function HomePage({ user, homeMode, setHomeMode }) {
   const { t } = useTranslation();
 
   if (user && homeMode === 'member') {
-    return (
-      <section className="space-y-8 py-20">
-        <div className="rounded-3xl bg-white p-10 shadow-[0_25px_70px_rgba(15,23,42,0.08)] transition-all duration-300 hover:shadow-[0_30px_80px_rgba(15,23,42,0.12)] dark:bg-slate-900 dark:shadow-[0_25px_70px_rgba(0,0,0,0.3)]">
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">{t('member.welcome', { name: user.name })}</h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">{t('member.description')}</p>
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Link
-              to="/recherche"
-              className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 text-base font-semibold text-white shadow-[0_20px_50px_rgba(249,115,22,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(249,115,22,0.35)]"
-            >
-              {t('member.findSitter')}
-            </Link>
-            <button
-              type="button"
-              onClick={() => setHomeMode('hero')}
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-4 text-base font-semibold text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-[0_15px_40px_rgba(15,23,42,0.08)] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            >
-              {t('member.backHome')}
-            </button>
-          </div>
-        </div>
-      </section>
-    );
+    const targetPath = user.role === 'admin' ? '/espace-admin' : user.role === 'babysitter' ? '/espace-babysitter' : '/espace-parent';
+    return <Navigate to={targetPath} replace />;
   }
 
   return (
