@@ -44,17 +44,17 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <section className="py-8 sm:py-10 lg:py-16">
-      <div className="mx-auto max-w-3xl rounded-[36px] bg-white p-5 shadow-soft sm:p-8">
-        <div className="space-y-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-700">Connexion</p>
-          <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">Se connecter à Confi&apos;Sit</h1>
-          <p className="text-slate-600">Accédez à votre espace parent ou baby-sitter pour gérer vos recherches, demandes et profils en toute simplicité.</p>
+    <section className="py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-3xl rounded-3xl bg-white p-9 shadow-[0_25px_70px_rgba(15,23,42,0.08)] transition-all duration-300 hover:shadow-[0_30px_80px_rgba(15,23,42,0.12)] dark:bg-slate-900 dark:shadow-[0_25px_70px_rgba(0,0,0,0.3)]">
+        <div className="space-y-5">
+          <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-700 dark:text-orange-400">Connexion</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">Se connecter à Confi'Sit</h1>
+          <p className="text-lg text-slate-600 dark:text-slate-300">Accédez à votre espace parent ou baby-sitter pour gérer vos recherches, demandes et profils en toute simplicité.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 grid gap-5 sm:mt-10 sm:gap-6">
-          <div className="space-y-3">
-            <label htmlFor="login-email" className="block text-sm font-semibold text-slate-700">Email</label>
+        <form onSubmit={handleSubmit} className="mt-10 grid gap-6">
+          <div className="space-y-4">
+            <label htmlFor="login-email" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Email</label>
             <input
               id="login-email"
               type="email"
@@ -62,7 +62,7 @@ function LoginPage({ onLogin }) {
               onChange={handleChange('email')}
               required
               placeholder="exemple@mail.com"
-              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200"
+              className="w-full rounded-3xl border border-slate-200 bg-slate-50 px-5 py-4 text-slate-700 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:focus:ring-orange-500/30"
             />
           </div>
           <PasswordInput
@@ -75,21 +75,21 @@ function LoginPage({ onLogin }) {
             autoComplete="current-password"
             required
           />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-full bg-orange-600 px-6 py-4 text-base font-semibold text-white shadow-soft transition hover:bg-orange-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:bg-orange-300 sm:w-auto"
+              className="w-full rounded-full bg-gradient-to-r from-orange-600 to-amber-600 px-8 py-4.5 text-base font-semibold text-white shadow-[0_20px_50px_rgba(249,115,22,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(249,115,22,0.35)] focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:bg-orange-300 sm:w-auto"
             >
               {isSubmitting ? 'Connexion…' : 'Se connecter'}
             </button>
-            <Link to="/mot-de-passe-oublie" className="text-sm font-semibold text-orange-700 underline-offset-4 transition hover:text-orange-800 hover:underline">
+            <Link to="/mot-de-passe-oublie" className="text-sm font-semibold text-orange-700 underline-offset-4 transition hover:text-orange-800 hover:underline dark:text-orange-400 dark:hover:text-orange-300">
               Mot de passe oublié ?
             </Link>
           </div>
         </form>
-        {error && <div className="mt-6"><AuthNotice type="error">{error}</AuthNotice></div>}
-        {notice && <div className="mt-6"><AuthNotice type="success">{notice}</AuthNotice></div>}
+        {error && <div className="mt-8"><AuthNotice type="error">{error}</AuthNotice></div>}
+        {notice && <div className="mt-8"><AuthNotice type="success">{notice}</AuthNotice></div>}
       </div>
     </section>
   );

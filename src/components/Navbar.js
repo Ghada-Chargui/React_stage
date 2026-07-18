@@ -1,15 +1,15 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Logo from './Logo';
 
-function Navbar({ user, onLogout }) {
+function Navbar({ user, onLogout, theme, toggleTheme, changeLanguage, currentLng }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const baseLinkClass = 'transition-colors duration-200 hover:text-amber-600';
-  const activeLinkClass = 'font-semibold text-amber-600 hover:text-amber-700';
-  const inactiveLinkClass = 'text-slate-600 hover:text-amber-600';
+  const baseLinkClass = 'transition-colors duration-200 hover:text-amber-600 dark:hover:text-amber-400';
+  const activeLinkClass = 'font-semibold text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300';
+  const inactiveLinkClass = 'text-slate-600 hover:text-amber-600 dark:text-slate-300 dark:hover:text-amber-400';
 
   const handleHowItWorksClick = (event) => {
     event.preventDefault();
@@ -22,30 +22,48 @@ function Navbar({ user, onLogout }) {
     navigate('/comment-ca-marche');
   };
 
+  const getAccueilClass = ({ isActive }) => {
+    return `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`;
+  };
+
+  const getConnexionClass = ({ isActive }) => {
+    if (isActive) {
+      return 'rounded-full px-5 py-2.5 transition-all duration-300 font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50';
+    }
+    return 'rounded-full px-5 py-2.5 transition-all duration-300 font-semibold bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-amber-900/30 dark:hover:text-amber-300';
+  };
+
+  const getInscriptionClass = ({ isActive }) => {
+    if (isActive) {
+      return 'rounded-full px-5 py-2.5 transition-all duration-300 font-semibold bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50';
+    }
+    return 'rounded-full px-5 py-2.5 transition-all duration-300 font-semibold bg-gradient-to-r from-amber-600 to-orange-600 text-white';
+  };
+
   return (
-    <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40">
+    <header className="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40 dark:border-slate-700 dark:bg-slate-900/90">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-3 font-semibold text-slate-900">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shadow-soft">
-            <Logo size={28} />
+        <Link to="/" className="flex items-center gap-3 font-extrabold text-slate-900 dark:text-slate-100">
+          <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 dark:from-amber-900/30 dark:to-orange-900/30 dark:text-amber-400">
+            <Logo size={30} />
           </div>
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Confi&apos;Sit</p>
-            <p className="text-base font-semibold text-slate-900">Baby-sitting confiance</p>
+            <p className="text-sm font-extrabold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Confi&apos;Sit</p>
+            <p className="text-base font-extrabold text-slate-900 dark:text-slate-100">Baby-sitting confiance</p>
           </div>
         </Link>
 
         <button
           type="button"
-          className="inline-flex items-center rounded-2xl border border-slate-200 p-2 text-slate-700 md:hidden"
+          className="inline-flex items-center rounded-3xl border border-slate-200 p-2.5 text-slate-700 md:hidden transition-all duration-300 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
           onClick={() => setOpen((value) => !value)}
           aria-label="Toggle navigation"
         >
-          <Menu size={20} />
+          <Menu size={22} />
         </button>
 
         <nav className={`${open ? 'block' : 'hidden'} md:flex md:items-center md:gap-4`}>
-          <NavLink to="/" className={({ isActive }) => `${baseLinkClass} ${isActive ? activeLinkClass : inactiveLinkClass}`}>Accueil</NavLink>
+          <NavLink to="/" className={getAccueilClass}>Accueil</NavLink>
           <button
             type="button"
             onClick={handleHowItWorksClick}
@@ -53,17 +71,26 @@ function Navbar({ user, onLogout }) {
           >
             Comment ça marche
           </button>
+          
+          <button
+            onClick={toggleTheme}
+            className="rounded-full p-2.5 text-xl transition-all duration-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
           {!user && (
             <>
-              <NavLink to="/connexion" className={({ isActive }) => `rounded-full px-4 py-2 transition ${isActive ? 'bg-amber-100 font-semibold text-amber-700 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-700'}`}>Connexion</NavLink>
-              <NavLink to="/inscription" className={({ isActive }) => `rounded-full px-4 py-2 transition ${isActive ? 'bg-amber-100 font-semibold text-amber-700 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-700'}`}>Inscription</NavLink>
+              <NavLink to="/connexion" className={getConnexionClass}>Connexion</NavLink>
+              <NavLink to="/inscription" className={getInscriptionClass}>Inscription</NavLink>
             </>
           )}
           {user && (
-            <div className="flex items-center gap-3 rounded-full bg-slate-100 px-4 py-2 text-slate-700">
+            <div className="flex items-center gap-3 rounded-full bg-slate-100 px-5 py-2.5 text-slate-700 shadow-sm dark:bg-slate-800 dark:text-slate-200 dark:shadow-slate-900/30">
               <span className="text-sm font-semibold">Bonjour, {user.name}</span>
-              <button type="button" onClick={onLogout} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100">
-                <LogOut size={16} /> Déconnexion
+              <button type="button" onClick={onLogout} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-100 hover:shadow-sm dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">
+                <LogOut size={18} /> Déconnexion
               </button>
             </div>
           )}

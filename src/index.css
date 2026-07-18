@@ -23,6 +23,11 @@ body {
     #f8fafc;
 }
 
+.dark body {
+  background: radial-gradient(circle at top, rgba(249, 115, 22, 0.15), transparent 35%),
+    #020617;
+}
+
 * {
   box-sizing: border-box;
 }

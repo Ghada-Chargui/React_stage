@@ -1,0 +1,189 @@
+{
+  "nav": {
+    "home": "Home",
+    "howItWorks": "How it works",
+    "login": "Login",
+    "signup": "Sign up",
+    "logout": "Logout"
+  },
+  "hero": {
+    "title": "Entrust your children with complete peace of mind, anywhere in Tunisia.",
+    "subtitle": "Confi'Sit connects parents and trusted babysitters with clear profiles, transparent reviews, and a mobile-first experience.",
+    "ctaSignup": "Start registration",
+    "ctaLogin": "Login",
+    "joinTitle": "Join us",
+    "joinSubtitle": "Reliable, nearby, and peaceful care.",
+    "joinCta": "Sign up now"
+  },
+  "whoWeAre": {
+    "tag": "Who we are",
+    "title": "Our mission: connect families with trusted babysitters.",
+    "description1": "Confi'Sit supports parents and babysitters with a focus on security, simplicity, and proximity. We offer a modern and reassuring service to organize peaceful care, throughout Tunisia.",
+    "description2": "Our vision is to create a local community where every parent finds the right support for their child and every babysitter builds a trusting relationship with families."
+  },
+  "howItWorks": {
+    "tag": "How it works",
+    "title": "A simple and reassuring experience for Tunisian parents.",
+    "whyChoose": {
+      "title": "Why choose Confi'Sit?",
+      "description": "We carefully select trusted babysitters, with clear profiles and a simple interface to organize your care with complete peace of mind.",
+      "point1": "A network of babysitters covering all neighborhoods of Tunis and its suburbs.",
+      "point2": "Precise search criteria to quickly identify the right profile for your needs.",
+      "point3": "A modern, secure platform accessible on all your devices."
+    },
+    "steps": {
+      "step1": {
+        "tag": "Step 1",
+        "title": "1. Discover reliable profiles",
+        "description": "Browse available babysitters with reviews, rates, and detailed skills."
+      },
+      "step2": {
+        "tag": "Step 2",
+        "title": "2. Filter according to your needs",
+        "description": "Choose by neighborhood, availability, rate or experience in a few clicks."
+      },
+      "step3": {
+        "tag": "Step 3",
+        "title": "3. Contact and confirm",
+        "description": "Send a request directly from the profile and organize the care with complete confidence."
+      },
+      "step4": {
+        "tag": "Step 4",
+        "title": "4. Share your feedback",
+        "description": "Leave a review to help other parents choose the right babysitter."
+      }
+    }
+  },
+  "search": {
+    "tag": "Find babysitters",
+    "title": "Find the perfect babysitter near you.",
+    "resultsCount": "Results: {{count}}",
+    "filters": {
+      "tag": "Filters",
+      "neighborhood": "Neighborhood",
+      "allNeighborhoods": "All neighborhoods",
+      "availability": "Availability",
+      "allAvailabilities": "All",
+      "maxRate": "Maximum rate",
+      "upToRate": "Up to {{rate}} TND / h",
+      "minExperience": "Minimum experience"
+    },
+    "quick": {
+      "tag": "Quick",
+      "title": "A ready-to-browse selection",
+      "placeholder": "Search by name or specialty"
+    },
+    "noResults": {
+      "title": "No babysitter matches your criteria.",
+      "description": "Try expanding your search or reducing filters."
+    },
+    "sitterCard": {
+      "location": "{{location}}",
+      "rate": "{{rate}} TND / h",
+      "experience": "{{experience}} years of experience",
+      "reviews": "{{count}} reviews",
+      "viewProfile": "View profile"
+    }
+  },
+  "sitterProfile": {
+    "backToSearch": "Back to search",
+    "rating": "{{rating}} ★",
+    "availability": "Availability",
+    "contact": "Contact this babysitter",
+    "about": "About",
+    "languages": "Languages",
+    "services": "Services",
+    "reviewsTitle": "Parent reviews",
+    "booking": {
+      "title": "Easy booking",
+      "description": "Choose a date, a time slot, and communicate transparently with the babysitter."
+    },
+    "faq": {
+      "title": "Frequently asked questions",
+      "q1": "Verified profile and visible recommendations.",
+      "q2": "No external login required for this demo.",
+      "q3": "The structure is ready to integrate a backend later."
+    },
+    "notFound": {
+      "title": "Babysitter not found",
+      "cta": "Back to search"
+    }
+  },
+  "auth": {
+    "login": {
+      "tag": "Login",
+      "title": "Login to Confi'Sit",
+      "description": "Access your parent or babysitter space to manage your searches, requests, and profiles with complete simplicity.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "example@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "********",
+      "forgotPassword": "Forgot password?",
+      "loginButton": "Login",
+      "loginLoading": "Logging in…",
+      "errorNoAccount": "No account found for this email.",
+      "errorWrongPassword": "Incorrect password.",
+      "success": "Successfully logged in, welcome!"
+    },
+    "signup": {
+      "tag": "Sign up",
+      "title": "Join Confi'Sit as a parent or babysitter.",
+      "subtitle": "Choose your profile to see the right form.",
+      "roleParent": "Parent",
+      "roleParentDescription": "I'm looking for a babysitter",
+      "roleBabysitter": "Babysitter",
+      "roleBabysitterDescription": "I offer my services",
+      "tagStepParent": "Parent sign up",
+      "tagStepBabysitter": "Babysitter sign up",
+      "formDescription": "Complete the form to finalize your account.",
+      "backButton": "Back",
+      "fields": {
+        "name": "Full name",
+        "namePlaceholder": "Your name",
+        "email": "Email",
+        "emailPlaceholder": "example@email.com",
+        "emailError": "This email is already in use, login or use another email.",
+        "password": "Password",
+        "passwordPlaceholder": "At least 8 characters",
+        "passwordError": "Password must be at least 8 characters.",
+        "passwordConfirm": "Confirm password",
+        "passwordConfirmPlaceholder": "Confirm password",
+        "passwordConfirmError": "Passwords do not match.",
+        "phone": "Phone",
+        "phonePlaceholder": "+216 9x xxx xxx",
+        "neighborhood": "Neighborhood",
+        "neighborhoodPlaceholder": "Ex: La Marsa",
+        "experience": "Years of experience",
+        "experiencePlaceholder": "Ex: 4",
+        "bio": "Your proposition",
+        "bioPlaceholder": "Introduce yourself and your approach.",
+        "message": "Message",
+        "messagePlaceholder": "Briefly describe your need (optional)."
+      },
+      "submitButton": "Submit my request",
+      "submitLoading": "Creating account…"
+    },
+    "forgotPassword": {
+      "title": "Forgot password",
+      "description": "If an account exists with this email, a reset link will be sent.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "example@email.com",
+      "cta": "Send link"
+    },
+    "notice": {
+      "success": "Account created successfully!"
+    }
+  },
+  "member": {
+    "welcome": "Welcome, {{name}}!",
+    "description": "Your Confi'Sit space is ready. Discover trusted babysitters and manage your requests from your dashboard.",
+    "findSitter": "Find a babysitter",
+    "backHome": "Back to home"
+  },
+  "footer": {
+    "title": "Confi'Sit",
+    "description": "A Tunisian service connecting parents and trusted babysitters, designed for your family's peace of mind.",
+    "signup": "Sign up",
+    "copyright": "© 2026 Confi'Sit. Created with care for Tunisian families."
+  }
+}
