@@ -12,6 +12,10 @@ import ParentSearchPage from './pages/parent/ParentSearchPage';
 import ParentReservationsPage from './pages/parent/ParentReservationsPage';
 import ParentProfilePage from './pages/parent/ParentProfilePage';
 import ParentBabysitterProfilePage from './pages/parent/ParentBabysitterProfilePage';
+import ParentChildrenPage from './pages/parent/ParentChildrenPage';
+import ParentHistoryPage from './pages/parent/ParentHistoryPage';
+import ParentComplaintPage from './pages/parent/ParentComplaintPage';
+import ParentFavoritesPage from './pages/parent/ParentFavoritesPage';
 import BabysitterDashboardPage from './pages/babysitter/BabysitterDashboardPage';
 import BabysitterProfilePage from './pages/babysitter/BabysitterProfilePage';
 import BabysitterRequestsPage from './pages/babysitter/BabysitterRequestsPage';
@@ -23,7 +27,7 @@ import RedirectIfAuth from './components/RedirectIfAuth';
 import PrivateRoute from './components/PrivateRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { initializeAdminDemoData } from './data/adminMockData';
-import { getStoredCurrentUser, normalizeRole, persistUserAccount, saveStoredCurrentUser } from './utils/storage';
+import { getStoredCurrentUser, getStoredUsers, normalizeRole, persistUserAccount, saveStoredCurrentUser } from './utils/storage';
 
 function AppContent() {
   const { i18n, t } = useTranslation();
@@ -105,19 +109,27 @@ function AppContent() {
 
   const handleLogin = (credentials) => {
     const normalizedRole = normalizeRole(credentials?.role);
+    // On relit le compte déjà enregistré (avec son vrai mot de passe) pour ne
+    // jamais l'écraser avec un objet partiel qui ne contiendrait pas ce champ.
+    const existingUsers = getStoredUsers();
+    const existingAccount = credentials?.email ? existingUsers[credentials.email] : null;
+
     const nextUser = {
-      name: credentials.name || 'Utilisateur',
+      name: credentials.name || existingAccount?.name || 'Utilisateur',
       email: credentials.email,
       role: normalizedRole,
-      phone: credentials.phone || '',
-      address: credentials.address || '',
-      childrenCount: credentials.childrenCount || 1,
-      bio: credentials.bio || '',
-      hourlyRate: credentials.hourlyRate || 35,
-      zone: credentials.zone || 'Tunis',
-      availability: credentials.availability || ['Matin'],
-      experience: credentials.experience || 3,
-      photo: credentials.photo || '',
+      phone: credentials.phone || existingAccount?.phone || '',
+      address: credentials.address || existingAccount?.address || '',
+      childrenCount: credentials.childrenCount || existingAccount?.childrenCount || 1,
+      bio: credentials.bio || existingAccount?.bio || '',
+      hourlyRate: credentials.hourlyRate || existingAccount?.hourlyRate || 35,
+      zone: credentials.zone || existingAccount?.zone || 'Tunis',
+      availability: credentials.availability || existingAccount?.availability || ['Matin'],
+      experience: credentials.experience || existingAccount?.experience || 3,
+      photo: credentials.photo || existingAccount?.photo || '',
+      // Ne jamais réécrire un mot de passe vide : on garde celui déjà stocké
+      // si l'appelant n'en transmet pas (ex: signup qui ne passe que name/email/role).
+      password: credentials.password || existingAccount?.password || '',
     };
     persistUserAccount(nextUser, { persistSession: true });
     setUser(nextUser);
@@ -167,7 +179,7 @@ function AppContent() {
             />
             <Route path="/recherche" element={<SearchPage />} />
             <Route path="/profil/:id" element={<SitterProfilePage />} />
-            <Route path="/inscription" element={<RedirectIfAuth><SignupPage onSignup={handleLogin} /></RedirectIfAuth>} />
+            <Route path="/inscription" element={<RedirectIfAuth><SignupPage /></RedirectIfAuth>} />
             <Route path="/connexion" element={<RedirectIfAuth><LoginPage onLogin={handleLogin} /></RedirectIfAuth>} />
             <Route
               path="/mot-de-passe-oublie"
@@ -196,6 +208,10 @@ function AppContent() {
               <Route path="reservations" element={<ParentReservationsPage />} />
               <Route path="profil" element={<ParentProfilePage />} />
               <Route path="babysitter/:id" element={<ParentBabysitterProfilePage />} />
+              <Route path="enfants" element={<ParentChildrenPage />} />
+              <Route path="favoris" element={<ParentFavoritesPage />} />
+              <Route path="historique" element={<ParentHistoryPage />} />
+              <Route path="reclamation" element={<ParentComplaintPage />} />
             </Route>
             <Route path="/espace-babysitter" element={<PrivateRoute requiredRole="babysitter"><BabysitterDashboardPage user={user} /></PrivateRoute>}>
               <Route index element={<div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"><p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">Tableau de bord</p><h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Bienvenue dans votre espace babysitter</h2></div>} />

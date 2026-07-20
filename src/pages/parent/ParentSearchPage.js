@@ -1,14 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getBabysitterProfiles, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
+import { Heart } from 'lucide-react';
+import { getBabysitterProfiles, getFavoriteSitterIds, toggleFavoriteSitter, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
 function ParentSearchPage() {
   const navigate = useNavigate();
+  const currentUser = useMemo(() => {
+    const storedUser = localStorage.getItem('confiSitUser');
+    return storedUser ? JSON.parse(storedUser) : null;
+  }, []);
   const [sitters, setSitters] = useState(() => getBabysitterProfiles());
+  const [favorites, setFavorites] = useState(() => getFavoriteSitterIds(currentUser?.email));
   const [zone, setZone] = useState('');
   const [rate, setRate] = useState(80);
   const [minRating, setMinRating] = useState(4.5);
   const [availability, setAvailability] = useState('');
+
+  const handleToggleFavorite = (sitterId) => {
+    if (!currentUser?.email) return;
+    setFavorites(toggleFavoriteSitter(currentUser.email, sitterId));
+  };
 
   useEffect(() => {
     const syncSitters = () => setSitters(getBabysitterProfiles());
@@ -74,7 +85,17 @@ function ParentSearchPage() {
                     <p className="font-extrabold text-slate-900 dark:text-slate-100">{sitter.name}</p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{sitter.location} • {sitter.rate} TND/h</p>
                   </div>
-                  <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">★ {sitter.rating.toFixed(1)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">★ {sitter.rating.toFixed(1)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleFavorite(sitter.id)}
+                      aria-label={favorites.includes(sitter.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${favorites.includes(sitter.id) ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-600/40 dark:bg-red-900/20 dark:text-red-400' : 'border-slate-200 bg-white text-slate-400 hover:text-red-500 dark:border-slate-700 dark:bg-slate-800'}`}
+                    >
+                      <Heart size={16} fill={favorites.includes(sitter.id) ? 'currentColor' : 'none'} />
+                    </button>
+                  </div>
                 </div>
                 <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{sitter.bio}</p>
                 <div className="mt-4 flex flex-wrap gap-2">

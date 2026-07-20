@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Home, Search, CalendarRange, UserCircle, LogOut } from 'lucide-react';
+import { Home, Search, CalendarRange, UserCircle, LogOut, Baby, History, MessageSquareWarning, Heart } from 'lucide-react';
 import { useMemo } from 'react';
 import { sitters } from '../../data/mockSitters';
 
@@ -20,7 +20,11 @@ function ParentDashboardPage({ user }) {
   const navItems = [
     { to: '/espace-parent', label: 'Tableau de bord', icon: Home },
     { to: '/espace-parent/recherche', label: 'Recherche', icon: Search },
+    { to: '/espace-parent/favoris', label: 'Favoris', icon: Heart },
     { to: '/espace-parent/reservations', label: 'Réservations', icon: CalendarRange },
+    { to: '/espace-parent/enfants', label: 'Mes enfants', icon: Baby },
+    { to: '/espace-parent/historique', label: 'Historique', icon: History },
+    { to: '/espace-parent/reclamation', label: 'Réclamation', icon: MessageSquareWarning },
     { to: '/espace-parent/profil', label: 'Profil', icon: UserCircle },
   ];
 

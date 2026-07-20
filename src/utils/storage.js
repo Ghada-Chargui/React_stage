@@ -181,3 +181,55 @@ export const getBabysitterProfiles = () => {
 };
 
 export const STORAGE_CHANGE_EVENT_NAME = STORAGE_CHANGE_EVENT;
+
+const CHILDREN_STORAGE_KEY = 'confiSitChildren';
+
+export const getChildrenForParent = (parentEmail) => {
+  if (!parentEmail) return [];
+  const all = parseJson(CHILDREN_STORAGE_KEY, {});
+  return Array.isArray(all[parentEmail]) ? all[parentEmail] : [];
+};
+
+export const saveChildrenForParent = (parentEmail, children) => {
+  if (!parentEmail) return;
+  const all = parseJson(CHILDREN_STORAGE_KEY, {});
+  all[parentEmail] = children;
+  localStorage.setItem(CHILDREN_STORAGE_KEY, JSON.stringify(all));
+  emitStorageChange();
+};
+
+export const addBabysitterReview = (sitterEmail, review) => {
+  if (!sitterEmail) return null;
+  const users = getStoredUsers();
+  const sitter = users[sitterEmail];
+  if (!sitter) return null;
+
+  const nextReviews = Array.isArray(sitter.reviews) ? [...sitter.reviews, review] : [review];
+  const ratingValues = nextReviews.map((item) => Number(item.stars) || 0).filter((value) => value > 0);
+  const nextRating = ratingValues.length
+    ? Number((ratingValues.reduce((sum, value) => sum + value, 0) / ratingValues.length).toFixed(1))
+    : sitter.rating;
+
+  users[sitterEmail] = { ...sitter, reviews: nextReviews, rating: nextRating };
+  saveStoredUsers(users);
+  return users[sitterEmail];
+};
+
+const FAVORITES_STORAGE_KEY = 'confiSitFavorites';
+
+export const getFavoriteSitterIds = (parentEmail) => {
+  if (!parentEmail) return [];
+  const all = parseJson(FAVORITES_STORAGE_KEY, {});
+  return Array.isArray(all[parentEmail]) ? all[parentEmail] : [];
+};
+
+export const toggleFavoriteSitter = (parentEmail, sitterId) => {
+  if (!parentEmail || !sitterId) return [];
+  const all = parseJson(FAVORITES_STORAGE_KEY, {});
+  const current = Array.isArray(all[parentEmail]) ? all[parentEmail] : [];
+  const next = current.includes(sitterId) ? current.filter((id) => id !== sitterId) : [...current, sitterId];
+  all[parentEmail] = next;
+  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(all));
+  emitStorageChange();
+  return next;
+};
