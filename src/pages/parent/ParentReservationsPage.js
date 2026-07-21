@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getBabysitterProfiles, addBabysitterReview, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
+import { getBabysitterProfiles, addBabysitterReview, getReservations, saveReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
 function ParentReservationsPage() {
   const currentUser = useMemo(() => {
@@ -7,23 +7,19 @@ function ParentReservationsPage() {
     return storedUser ? JSON.parse(storedUser) : null;
   }, []);
 
-  const [reservations, setReservations] = useState([]);
+  const [allReservations, setAllReservations] = useState(() => getReservations());
   const [sitters, setSitters] = useState(() => getBabysitterProfiles());
   const [form, setForm] = useState({ sitterId: '', date: '', hour: '', duration: '3', address: '', paymentMethod: 'sur_place' });
   const [reviewDrafts, setReviewDrafts] = useState({});
 
   useEffect(() => {
-    const stored = localStorage.getItem('confiSitParentReservations');
-    if (stored) {
-      setReservations(JSON.parse(stored));
-    }
-  }, []);
-
-  useEffect(() => {
-    const syncSitters = () => setSitters(getBabysitterProfiles());
-    syncSitters();
-    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncSitters);
-    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncSitters);
+    const syncData = () => {
+      setAllReservations(getReservations());
+      setSitters(getBabysitterProfiles());
+    };
+    syncData();
+    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncData);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncData);
   }, []);
 
   useEffect(() => {
@@ -32,15 +28,19 @@ function ParentReservationsPage() {
     }
   }, [form.sitterId, sitters]);
 
-  useEffect(() => {
-    localStorage.setItem('confiSitParentReservations', JSON.stringify(reservations));
-  }, [reservations]);
+  // Réservations de ce parent uniquement (la liste globale est partagée avec les babysitters)
+  const reservations = useMemo(
+    () => allReservations.filter((item) => item.parentEmail === currentUser?.email),
+    [allReservations, currentUser]
+  );
 
   const handleSubmit = (event) => {
     event.preventDefault();
     const sitter = sitters.find((item) => item.id === form.sitterId);
     const nextReservation = {
       id: Date.now().toString(),
+      parentName: currentUser?.name || 'Parent',
+      parentEmail: currentUser?.email || '',
       sitterId: sitter?.id,
       sitterName: sitter?.name || 'Babysitter',
       sitterEmail: sitter?.email || '',
@@ -51,17 +51,20 @@ function ParentReservationsPage() {
       paymentMethod: form.paymentMethod,
       status: 'en attente',
     };
-    setReservations((current) => [nextReservation, ...current]);
+    const next = [nextReservation, ...allReservations];
+    setAllReservations(next);
+    saveReservations(next);
     setForm({ ...form, date: '', hour: '', duration: '3', address: '' });
   };
 
-  const cancelReservation = (id) => {
-    setReservations((current) => current.map((item) => (item.id === id ? { ...item, status: 'annulée' } : item)));
+  const updateReservation = (id, patch) => {
+    const next = allReservations.map((item) => (item.id === id ? { ...item, ...patch } : item));
+    setAllReservations(next);
+    saveReservations(next);
   };
 
-  const completeReservation = (id) => {
-    setReservations((current) => current.map((item) => (item.id === id ? { ...item, status: 'terminée' } : item)));
-  };
+  const cancelReservation = (id) => updateReservation(id, { status: 'annulée' });
+  const completeReservation = (id) => updateReservation(id, { status: 'terminée' });
 
   const updateReviewDraft = (id, field, value) => {
     setReviewDrafts((current) => ({ ...current, [id]: { ...(current[id] || { stars: 5, comment: '' }), [field]: value } }));
@@ -78,7 +81,7 @@ function ParentReservationsPage() {
       date: new Date().toISOString().slice(0, 10),
     };
     addBabysitterReview(reservation.sitterEmail, review);
-    setReservations((current) => current.map((item) => (item.id === reservation.id ? { ...item, review } : item)));
+    updateReservation(reservation.id, { review });
     setReviewDrafts((current) => {
       const next = { ...current };
       delete next[reservation.id];
@@ -87,6 +90,13 @@ function ParentReservationsPage() {
   };
 
   const pendingReservations = useMemo(() => reservations.filter((item) => item.status === 'en attente'), [reservations]);
+
+  const statusBadgeClass = (status) => {
+    if (status === 'terminée') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
+    if (status === 'confirmée') return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
+    if (status === 'annulée' || status === 'refusée') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+    return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+  };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
@@ -106,17 +116,22 @@ function ParentReservationsPage() {
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{reservation.address}</p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{reservation.paymentMethod === 'carte' ? 'Paiement par carte' : 'Paiement sur place'}</p>
                   </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${
-                    reservation.status === 'terminée' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-                    : reservation.status === 'annulée' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                  }`}>{reservation.status}</span>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${statusBadgeClass(reservation.status)}`}>{reservation.status}</span>
                 </div>
                 {reservation.status === 'en attente' && (
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">En attente de confirmation par la babysitter…</p>
+                    <button type="button" onClick={() => cancelReservation(reservation.id)} className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600/40 dark:hover:bg-red-900/20">Annuler</button>
+                  </div>
+                )}
+                {reservation.status === 'confirmée' && (
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button type="button" onClick={() => completeReservation(reservation.id)} className="rounded-full border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-600/40 dark:hover:bg-emerald-900/20">Marquer comme terminée</button>
                     <button type="button" onClick={() => cancelReservation(reservation.id)} className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600/40 dark:hover:bg-red-900/20">Annuler</button>
                   </div>
+                )}
+                {reservation.status === 'refusée' && (
+                  <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Cette babysitter n’a pas pu accepter votre demande.</p>
                 )}
                 {reservation.status === 'terminée' && !reservation.review && (
                   <div className="mt-4 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
@@ -188,7 +203,7 @@ function ParentReservationsPage() {
         </form>
         <div className="mt-6 rounded-3xl bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
           <p className="font-semibold">En attente : {pendingReservations.length}</p>
-          <p className="mt-2">Les réservations sont stockées dans le navigateur pour cette démo.</p>
+          <p className="mt-2">Votre demande est envoyée directement à la babysitter, qui doit l’accepter avant la garde.</p>
         </div>
       </div>
     </div>

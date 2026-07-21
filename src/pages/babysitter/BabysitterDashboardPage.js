@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Home, UserCircle2, Inbox, MessageSquareQuote } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
 function BabysitterDashboardPage({ user }) {
   const location = useLocation();
@@ -9,6 +10,24 @@ function BabysitterDashboardPage({ user }) {
     if (!storedUser) return user;
     return JSON.parse(storedUser);
   }, [user]);
+
+  const [reservations, setReservations] = useState(() => getReservations());
+
+  useEffect(() => {
+    const syncReservations = () => setReservations(getReservations());
+    syncReservations();
+    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
+  }, []);
+
+  const myRequests = useMemo(
+    () => reservations.filter((item) => item.sitterEmail === currentUser?.email),
+    [reservations, currentUser]
+  );
+  const pendingCount = myRequests.filter((item) => item.status === 'en attente').length;
+  const nextConfirmed = myRequests
+    .filter((item) => item.status === 'confirmée')
+    .sort((a, b) => `${a.date}${a.hour}`.localeCompare(`${b.date}${b.hour}`))[0];
 
   const navItems = [
     { to: '/espace-babysitter', label: 'Tableau de bord', icon: Home },
@@ -51,11 +70,11 @@ function BabysitterDashboardPage({ user }) {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                 <p className="text-sm text-slate-500 dark:text-slate-400">Demandes en attente</p>
-                <p className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">3</p>
+                <p className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">{pendingCount}</p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                 <p className="text-sm text-slate-500 dark:text-slate-400">Prochaine garde</p>
-                <p className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">Samedi 09:00</p>
+                <p className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">{nextConfirmed ? `${nextConfirmed.date} ${nextConfirmed.hour}` : '—'}</p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                 <p className="text-sm text-slate-500 dark:text-slate-400">Note moyenne</p>

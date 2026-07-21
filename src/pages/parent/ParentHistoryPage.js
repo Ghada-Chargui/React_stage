@@ -1,20 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { History } from 'lucide-react';
+import { getReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
 function ParentHistoryPage() {
-  const [reservations, setReservations] = useState([]);
+  const currentUser = useMemo(() => {
+    const storedUser = localStorage.getItem('confiSitUser');
+    return storedUser ? JSON.parse(storedUser) : null;
+  }, []);
+
+  const [reservations, setReservations] = useState(() => getReservations());
 
   useEffect(() => {
-    const stored = localStorage.getItem('confiSitParentReservations');
-    if (stored) {
-      setReservations(JSON.parse(stored));
-    }
+    const syncReservations = () => setReservations(getReservations());
+    syncReservations();
+    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
   }, []);
 
   const pastReservations = useMemo(
-    () => reservations.filter((item) => item.status === 'terminée' || item.status === 'annulée'),
-    [reservations]
+    () => reservations.filter((item) => item.parentEmail === currentUser?.email && ['terminée', 'annulée', 'refusée'].includes(item.status)),
+    [reservations, currentUser]
   );
 
   const paymentLabel = (method) => {

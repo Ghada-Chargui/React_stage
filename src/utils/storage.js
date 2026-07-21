@@ -233,3 +233,39 @@ export const toggleFavoriteSitter = (parentEmail, sitterId) => {
   emitStorageChange();
   return next;
 };
+
+const RESERVATIONS_STORAGE_KEY = 'confiSitReservations';
+const LEGACY_RESERVATIONS_STORAGE_KEY = 'confiSitParentReservations';
+
+export const getReservations = () => {
+  const stored = localStorage.getItem(RESERVATIONS_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      localStorage.removeItem(RESERVATIONS_STORAGE_KEY);
+    }
+  }
+
+  // Migration ponctuelle depuis l'ancienne clé (liste propre au parent, non partagée avec la babysitter)
+  const legacy = localStorage.getItem(LEGACY_RESERVATIONS_STORAGE_KEY);
+  if (legacy) {
+    try {
+      const parsedLegacy = JSON.parse(legacy);
+      if (Array.isArray(parsedLegacy)) {
+        localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(parsedLegacy));
+        return parsedLegacy;
+      }
+    } catch {
+      // ignore malformed legacy data
+    }
+  }
+
+  return [];
+};
+
+export const saveReservations = (reservations) => {
+  localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(reservations));
+  emitStorageChange();
+};
