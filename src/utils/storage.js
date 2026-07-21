@@ -269,3 +269,15 @@ export const saveReservations = (reservations) => {
   localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(reservations));
   emitStorageChange();
 };
+
+export const deleteUserAccount = (email) => {
+  if (!email) return;
+  const users = getStoredUsers();
+  delete users[email];
+  saveStoredUsers(users);
+
+  const currentUser = getStoredCurrentUser();
+  if (currentUser?.email === email) {
+    saveStoredCurrentUser(null);
+  }
+};

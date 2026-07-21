@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Home, UserCircle2, Inbox, MessageSquareQuote } from 'lucide-react';
+import { Home, UserCircle2, Inbox, MessageSquareQuote, History } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { getReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
@@ -34,6 +34,7 @@ function BabysitterDashboardPage({ user }) {
     { to: '/espace-babysitter/profil', label: 'Profil', icon: UserCircle2 },
     { to: '/espace-babysitter/demandes', label: 'Demandes', icon: Inbox },
     { to: '/espace-babysitter/avis', label: 'Avis', icon: MessageSquareQuote },
+    { to: '/espace-babysitter/historique', label: 'Historique', icon: History },
   ];
 
   return (
