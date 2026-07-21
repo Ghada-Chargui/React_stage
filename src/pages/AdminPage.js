@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, LayoutGrid, PieChart, ShieldAlert, Users, MessageSquareWarning, LogOut } from 'lucide-react';
+import { BarChart3, LayoutGrid, PieChart, ShieldAlert, Users, MessageSquareWarning, LogOut, Wallet, BadgeCheck, Activity, UserPlus, CalendarPlus, Clock, TrendingUp } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, Legend } from 'recharts';
 import StatCard from '../components/StatCard';
 import ChartWidget from '../components/ChartWidget';
@@ -9,7 +9,7 @@ import UserDetailCard from '../components/UserDetailCard';
 import ConfirmModal from '../components/ConfirmModal';
 import ComplaintCard from '../components/ComplaintCard';
 import { getAdminComplaints, saveAdminComplaints, initializeAdminDemoData } from '../data/adminMockData';
-import { getRegisteredUsers, saveRegisteredUsers } from '../utils/storage';
+import { getRegisteredUsers, saveRegisteredUsers, getReservations, toggleUserVerification } from '../utils/storage';
 
 const COLORS = ['#f59e0b', '#3b82f6', '#14b8a6', '#a855f7'];
 const ROLE_COLORS = {
@@ -22,40 +22,64 @@ const COMPLAINT_COLORS = {
   Traité: '#10b981',
 };
 
+const relativeDate = (dateStr) => {
+  if (!dateStr) return '';
+  const diffDays = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(dateStr).setHours(0, 0, 0, 0)) / 86400000);
+  if (diffDays <= 0) return 'Aujourd’hui';
+  if (diffDays === 1) return 'Hier';
+  return `Il y a ${diffDays} jours`;
+};
+
 function AdminPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [reservations, setReservations] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [zoneFilter, setZoneFilter] = useState('');
+  const [minRatingFilter, setMinRatingFilter] = useState('0');
+  const [accountStatusFilter, setAccountStatusFilter] = useState('all');
   const [period, setPeriod] = useState('30');
-  const [complaintStatus, setComplaintStatus] = useState('all');
-  const [feedback, setFeedback] = useState('');
+  const [complaintFilter, setComplaintFilter] = useState('all');
+  const [draftStatus, setDraftStatus] = useState('En attente');
+  const [draftPriority, setDraftPriority] = useState('Normale');
+  const [replyText, setReplyText] = useState('');
 
   useEffect(() => {
     initializeAdminDemoData();
-    const syncUsers = () => {
+    const syncData = () => {
       const storedUsers = getRegisteredUsers();
       const storedComplaints = getAdminComplaints();
+      const storedReservations = getReservations();
       setUsers(storedUsers);
       setComplaints(storedComplaints);
-      if (storedUsers[0]) setSelectedUser(storedUsers[0]);
-      if (storedComplaints[0]) setSelectedComplaint(storedComplaints[0]);
+      setReservations(storedReservations);
+      setSelectedUser((current) => current || storedUsers[0] || null);
+      setSelectedComplaint((current) => current || storedComplaints[0] || null);
     };
 
-    syncUsers();
-    window.addEventListener('storage', syncUsers);
-    window.addEventListener('confiSitDataChanged', syncUsers);
+    syncData();
+    window.addEventListener('storage', syncData);
+    window.addEventListener('confiSitDataChanged', syncData);
     return () => {
-      window.removeEventListener('storage', syncUsers);
-      window.removeEventListener('confiSitDataChanged', syncUsers);
+      window.removeEventListener('storage', syncData);
+      window.removeEventListener('confiSitDataChanged', syncData);
     };
   }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/espace-admin/profils' && location.state?.focusEmail && users.length) {
+      const match = users.find((user) => user.email === location.state.focusEmail);
+      if (match) setSelectedUser(match);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, users]);
 
   const currentUser = useMemo(() => {
     const storedUser = localStorage.getItem('confiSitUser');
@@ -68,19 +92,80 @@ function AdminPage() {
       const matchesRole = roleFilter === 'all' || user.role === roleFilter;
       const haystack = `${user.name} ${user.email}`.toLowerCase();
       const matchesSearch = haystack.includes(searchTerm.toLowerCase());
-      return matchesRole && matchesSearch;
+      const matchesZone = !zoneFilter || (user.zone || user.address || '').toLowerCase().includes(zoneFilter.toLowerCase());
+      const matchesRating = Number(user.rating || 0) >= Number(minRatingFilter);
+      const matchesStatus = accountStatusFilter === 'all' || user.status === accountStatusFilter;
+      return matchesRole && matchesSearch && matchesZone && matchesRating && matchesStatus;
     });
-  }, [users, roleFilter, searchTerm]);
+  }, [users, roleFilter, searchTerm, zoneFilter, minRatingFilter, accountStatusFilter]);
 
   const filteredComplaints = useMemo(() => {
-    return complaints.filter((complaint) => complaintStatus === 'all' || complaint.status === complaintStatus);
-  }, [complaints, complaintStatus]);
+    return complaints.filter((complaint) => complaintFilter === 'all' || complaint.status === complaintFilter);
+  }, [complaints, complaintFilter]);
+
+  const babysitters = useMemo(() => users.filter((user) => user.role === 'babysitter'), [users]);
+
+  const topBabysitters = useMemo(() => {
+    return babysitters
+      .map((sitter) => ({
+        ...sitter,
+        reservationCount: reservations.filter((item) => item.sitterEmail === sitter.email).length,
+      }))
+      .sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0) || b.reservationCount - a.reservationCount)
+      .slice(0, 5);
+  }, [babysitters, reservations]);
+
+  const acceptanceStats = useMemo(() => {
+    return babysitters
+      .map((sitter) => {
+        const answered = reservations.filter((item) => item.sitterEmail === sitter.email && ['confirmée', 'refusée', 'terminée'].includes(item.status));
+        const accepted = answered.filter((item) => item.status !== 'refusée').length;
+        const rate = answered.length ? Math.round((accepted / answered.length) * 100) : null;
+        return { ...sitter, answered: answered.length, accepted, rate };
+      })
+      .filter((sitter) => sitter.answered > 0)
+      .sort((a, b) => (b.rate || 0) - (a.rate || 0));
+  }, [babysitters, reservations]);
+
+  const simulatedRevenue = useMemo(() => {
+    return reservations
+      .filter((item) => item.status === 'terminée')
+      .reduce((sum, item) => {
+        const sitter = users.find((user) => user.email === item.sitterEmail);
+        const rate = Number(sitter?.hourlyRate) || 35;
+        const hours = parseInt(item.duration, 10) || 1;
+        return sum + rate * hours * 0.1;
+      }, 0);
+  }, [reservations, users]);
+
+  const pendingVerificationCount = useMemo(() => babysitters.filter((sitter) => !sitter.verified).length, [babysitters]);
+
+  const complaintResponseTime = useMemo(() => {
+    const resolved = complaints.filter((item) => item.resolvedAt && item.date);
+    if (!resolved.length) return null;
+    const totalDays = resolved.reduce((sum, item) => sum + Math.max(0, (new Date(item.resolvedAt) - new Date(item.date)) / 86400000), 0);
+    return (totalDays / resolved.length).toFixed(1);
+  }, [complaints]);
+
+  const recentActivity = useMemo(() => {
+    const items = [
+      ...users.map((user) => ({ type: 'inscription', label: `${user.name} s’est inscrit(e) en tant que ${user.role}`, date: user.registeredAt, icon: UserPlus })),
+      ...complaints.map((item) => ({ type: 'reclamation', label: `Réclamation reçue : "${item.subject}" (${item.userName})`, date: item.date, icon: MessageSquareWarning })),
+      ...reservations.map((item) => ({ type: 'reservation', label: `${item.parentName || 'Un parent'} a réservé ${item.sitterName || 'une babysitter'}`, date: item.date, icon: CalendarPlus })),
+    ];
+    return items
+      .filter((item) => item.date)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 6);
+  }, [users, complaints, reservations]);
 
   const summaryCards = [
     { label: 'Total parents', value: users.filter((user) => user.role === 'parent').length, icon: Users, detail: 'Comptes actifs et en attente' },
     { label: 'Total babysitters', value: users.filter((user) => user.role === 'babysitter').length, icon: ShieldAlert, detail: 'Profils disponibles' },
-    { label: 'Réservations', value: '24', icon: BarChart3, detail: 'Sur la période sélectionnée' },
+    { label: 'Réservations', value: reservations.length, icon: BarChart3, detail: 'Toutes périodes confondues' },
     { label: 'Réclamations en attente', value: complaints.filter((item) => item.status === 'En attente').length, icon: MessageSquareWarning, detail: 'À traiter rapidement' },
+    { label: 'Revenu simulé (10%)', value: `${simulatedRevenue.toFixed(0)} TND`, icon: Wallet, detail: 'Sur les gardes terminées' },
+    { label: 'Babysitters à vérifier', value: pendingVerificationCount, icon: BadgeCheck, detail: 'Profils en attente de validation' },
   ];
 
   const insightData = useMemo(() => {
@@ -145,11 +230,35 @@ function AdminPage() {
     setIsConfirmOpen(false);
   };
 
+  const handleToggleVerify = (user) => {
+    const updated = toggleUserVerification(user.email);
+    if (!updated) return;
+    const nextUsers = users.map((item) => (item.email === user.email ? updated : item));
+    setUsers(nextUsers);
+    setSelectedUser(updated);
+  };
+
   const handleSaveComplaint = (event) => {
     event.preventDefault();
-    const nextComplaints = complaints.map((item) => (item.id === selectedComplaint.id ? { ...item, status: complaintStatus, note: feedback || item.note } : item));
+    const today = new Date().toISOString().slice(0, 10);
+    const nextMessages = replyText.trim()
+      ? [...(selectedComplaint.messages || []), { author: 'Support', text: replyText.trim(), date: today }]
+      : (selectedComplaint.messages || []);
+
+    const nextComplaints = complaints.map((item) => {
+      if (item.id !== selectedComplaint.id) return item;
+      return {
+        ...item,
+        status: draftStatus,
+        priority: draftPriority,
+        messages: nextMessages,
+        resolvedAt: draftStatus === 'Traité' ? (item.resolvedAt || today) : (draftStatus === 'En attente' ? null : item.resolvedAt),
+      };
+    });
     setComplaints(nextComplaints);
     saveAdminComplaints(nextComplaints);
+    setSelectedComplaint(nextComplaints.find((item) => item.id === selectedComplaint.id));
+    setReplyText('');
   };
 
   const handleLogout = () => {
@@ -164,8 +273,16 @@ function AdminPage() {
 
   const handleSelectComplaint = (complaint) => {
     setSelectedComplaint(complaint);
-    setComplaintStatus(complaint.status);
-    setFeedback(complaint.note || '');
+    setDraftStatus(complaint.status);
+    setDraftPriority(complaint.priority || 'Normale');
+    setReplyText('');
+  };
+
+  const handleViewComplaintProfile = () => {
+    const matchedUser = users.find((user) => user.name === selectedComplaint?.userName);
+    if (matchedUser) {
+      navigate('/espace-admin/profils', { state: { focusEmail: matchedUser.email } });
+    }
   };
 
   return (
@@ -202,7 +319,7 @@ function AdminPage() {
               <p className="mt-3 max-w-2xl text-sm text-orange-50">Surveillez la santé globale de la plateforme, les profils et les incidents de façon centralisée.</p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {summaryCards.map((card) => (
                 <StatCard key={card.label} icon={card.icon} label={card.label} value={card.value} detail={card.detail} />
               ))}
@@ -240,34 +357,34 @@ function AdminPage() {
               </ChartWidget>
             </div>
 
-            <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
-              <ChartWidget title="Réservations par mois" description="Volume mensuel de réservations">
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={insightData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
-                      <XAxis dataKey="month" stroke="#64748b" />
-                      <YAxis stroke="#64748b" />
-                      <Tooltip />
-                      <Bar dataKey="reservations" fill="#f59e0b" radius={[8, 8, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                  <Activity size={18} />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">Activité récente</p>
+                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Ce qui vient de se passer</h3>
                 </div>
-              </ChartWidget>
-
-              <ChartWidget title="Réclamations" description="État des signalements">
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RechartsPieChart>
-                      <Pie data={complaintDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={4}>
-                        {complaintDistribution.map((entry, index) => <Cell key={`${entry.name}-${index}`} fill={COMPLAINT_COLORS[entry.name] || COLORS[index % COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
-                </div>
-              </ChartWidget>
+              </div>
+              <div className="mt-5 space-y-3">
+                {recentActivity.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Aucune activité récente.</p>
+                ) : recentActivity.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={`${item.type}-${index}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
+                          <Icon size={14} />
+                        </span>
+                        <p className="text-sm text-slate-700 dark:text-slate-200">{item.label}</p>
+                      </div>
+                      <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{relativeDate(item.date)}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </section>
         ) : null}
@@ -320,24 +437,117 @@ function AdminPage() {
                 </div>
               </ChartWidget>
             </div>
+
+            <div className="grid gap-6 xl:grid-cols-2">
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><TrendingUp size={18} /></span>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">Classement</p>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Top babysitters</h3>
+                  </div>
+                </div>
+                <div className="mt-5 space-y-3">
+                  {topBabysitters.length === 0 ? (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Aucune babysitter enregistrée.</p>
+                  ) : topBabysitters.map((sitter, index) => (
+                    <div key={sitter.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-sm font-extrabold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">#{index + 1}</span>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{sitter.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{sitter.reservationCount} réservation(s)</p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold text-amber-700">★ {sitter.rating || '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"><ShieldAlert size={18} /></span>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">Fiabilité</p>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Taux d’acceptation des demandes</h3>
+                  </div>
+                </div>
+                <div className="mt-5 space-y-3">
+                  {acceptanceStats.length === 0 ? (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Aucune demande traitée pour le moment.</p>
+                  ) : acceptanceStats.map((sitter) => (
+                    <div key={sitter.id} className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-semibold text-slate-800 dark:text-slate-100">{sitter.name}</span>
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">{sitter.accepted}/{sitter.answered} ({sitter.rate}%)</span>
+                      </div>
+                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                        <div className={`h-full rounded-full ${sitter.rate >= 70 ? 'bg-emerald-500' : sitter.rate >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${sitter.rate}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><Clock size={18} /></span>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">Support</p>
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Délai moyen de traitement</h3>
+                  </div>
+                </div>
+                <p className="mt-4 text-3xl font-extrabold text-slate-900 dark:text-slate-100">{complaintResponseTime !== null ? `${complaintResponseTime} j` : '—'}</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Entre le dépôt d’une réclamation et son passage à "Traité".</p>
+              </div>
+              <ChartWidget title="Réclamations" description="État des signalements">
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie data={complaintDistribution} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={4}>
+                        {complaintDistribution.map((entry, index) => <Cell key={`${entry.name}-${index}`} fill={COMPLAINT_COLORS[entry.name] || COLORS[index % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+              </ChartWidget>
+            </div>
           </section>
         ) : null}
 
         {location.pathname === '/espace-admin/profils' ? (
           <section className="space-y-6">
             <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-4">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">Gestion des profils</p>
                   <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">Liste des utilisateurs</h2>
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="flex flex-wrap gap-2">
                   <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Rechercher nom ou email" className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" />
+                  <input value={zoneFilter} onChange={(event) => setZoneFilter(event.target.value)} placeholder="Zone géographique" className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" />
                   <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
                     <option value="all">Tous les rôles</option>
                     <option value="parent">Parent</option>
                     <option value="babysitter">Babysitter</option>
                     <option value="admin">Admin</option>
+                  </select>
+                  <select value={minRatingFilter} onChange={(event) => setMinRatingFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                    <option value="0">Toutes les notes</option>
+                    <option value="3">★ 3 et plus</option>
+                    <option value="4">★ 4 et plus</option>
+                    <option value="4.5">★ 4.5 et plus</option>
+                  </select>
+                  <select value={accountStatusFilter} onChange={(event) => setAccountStatusFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                    <option value="all">Tous les statuts</option>
+                    <option value="Actif">Actif</option>
+                    <option value="En attente">En attente</option>
+                    <option value="Suspendu">Suspendu</option>
                   </select>
                 </div>
               </div>
@@ -346,7 +556,7 @@ function AdminPage() {
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
               <UserTable users={filteredUsers} selectedUserId={selectedUser?.id} onSelect={handleSelectUser} />
               <div className="space-y-6">
-                <UserDetailCard user={selectedUser} onEdit={() => setEditingUser(selectedUser)} />
+                <UserDetailCard user={selectedUser} onEdit={() => setEditingUser(selectedUser)} onToggleVerify={handleToggleVerify} />
                 {editingUser ? (
                   <form onSubmit={handleSaveUser} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                     <div className="grid gap-4 md:grid-cols-2">
@@ -390,7 +600,7 @@ function AdminPage() {
                   <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">Gestion des réclamations</p>
                   <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">Liste des signalements</h2>
                 </div>
-                <select value={complaintStatus} onChange={(event) => setComplaintStatus(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
+                <select value={complaintFilter} onChange={(event) => setComplaintFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
                   <option value="all">Tous les statuts</option>
                   <option value="En attente">En attente</option>
                   <option value="Traité">Traité</option>
@@ -403,16 +613,55 @@ function AdminPage() {
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                 {selectedComplaint ? (
-                  <form onSubmit={handleSaveComplaint} className="space-y-4">
-                    <div>
-                      <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">Détail</p>
-                      <h3 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-slate-100">{selectedComplaint.subject}</h3>
-                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{selectedComplaint.message}</p>
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">Détail</p>
+                        <h3 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-slate-100">{selectedComplaint.subject}</h3>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Déposée par {selectedComplaint.userName} le {selectedComplaint.date}</p>
+                      </div>
+                      <button type="button" onClick={handleViewComplaintProfile} className="shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
+                        Voir le profil
+                      </button>
                     </div>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Statut<select value={complaintStatus} onChange={(event) => setComplaintStatus(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"><option value="En attente">En attente</option><option value="Traité">Traité</option></select></label>
-                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Note interne<textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} className="mt-2 min-h-24 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                    <button type="submit" className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white">Sauvegarder</button>
-                  </form>
+
+                    <div className="space-y-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
+                      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Fil de discussion</p>
+                      {(selectedComplaint.messages || []).map((msg, index) => (
+                        <div key={index} className={`rounded-2xl p-3 text-sm ${msg.author === 'Support' ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-white dark:bg-slate-900'}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-800 dark:text-slate-100">{msg.author}</span>
+                            <span className="text-xs text-slate-400">{msg.date}</span>
+                          </div>
+                          <p className="mt-1 text-slate-600 dark:text-slate-300">{msg.text}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <form onSubmit={handleSaveComplaint} className="space-y-4">
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        Répondre
+                        <textarea value={replyText} onChange={(event) => setReplyText(event.target.value)} rows="3" placeholder="Votre réponse au parent ou à la babysitter..." className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
+                      </label>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Statut
+                          <select value={draftStatus} onChange={(event) => setDraftStatus(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                            <option value="En attente">En attente</option>
+                            <option value="Traité">Traité</option>
+                          </select>
+                        </label>
+                        <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                          Priorité
+                          <select value={draftPriority} onChange={(event) => setDraftPriority(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+                            <option value="Normale">Normale</option>
+                            <option value="Urgente">Urgente</option>
+                          </select>
+                        </label>
+                      </div>
+                      <button type="submit" className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white">Enregistrer</button>
+                    </form>
+                  </div>
                 ) : <p className="text-sm text-slate-500">Sélectionnez une réclamation.</p>}
               </div>
             </div>

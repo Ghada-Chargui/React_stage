@@ -66,7 +66,13 @@ const createDefaultComplaints = () => [
     message: 'La réservation du 14 juillet n’a pas encore été réglée.',
     date: '2026-07-10',
     status: 'En attente',
+    priority: 'Urgente',
     note: 'Suivi à prévoir avec l’équipe finance.',
+    messages: [
+      { author: 'Sonia Ben Ali', text: 'La réservation du 14 juillet n’a pas encore été réglée.', date: '2026-07-10' },
+      { author: 'Support', text: 'Suivi à prévoir avec l’équipe finance.', date: '2026-07-10' },
+    ],
+    resolvedAt: null,
   },
   {
     id: 'complaint-2',
@@ -75,7 +81,13 @@ const createDefaultComplaints = () => [
     message: 'Le parent a demandé un changement de dernière minute.',
     date: '2026-07-08',
     status: 'Traité',
+    priority: 'Normale',
     note: 'Alerte envoyée au support client.',
+    messages: [
+      { author: 'Mouna Kefi', text: 'Le parent a demandé un changement de dernière minute.', date: '2026-07-08' },
+      { author: 'Support', text: 'Alerte envoyée au support client.', date: '2026-07-09' },
+    ],
+    resolvedAt: '2026-07-09',
   },
   {
     id: 'complaint-3',
@@ -84,7 +96,12 @@ const createDefaultComplaints = () => [
     message: 'Le profil ne contient pas toutes les informations attendues.',
     date: '2026-07-12',
     status: 'En attente',
+    priority: 'Normale',
     note: '',
+    messages: [
+      { author: 'Hedi Zarrouk', text: 'Le profil ne contient pas toutes les informations attendues.', date: '2026-07-12' },
+    ],
+    resolvedAt: null,
   },
 ];
 

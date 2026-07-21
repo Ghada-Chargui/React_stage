@@ -29,7 +29,10 @@ function ParentComplaintPage() {
       message: form.message,
       date: new Date().toISOString().slice(0, 10),
       status: 'En attente',
+      priority: 'Normale',
       note: '',
+      messages: [{ author: currentUser?.name || 'Parent', text: form.message, date: new Date().toISOString().slice(0, 10) }],
+      resolvedAt: null,
     };
     const nextAll = [nextComplaint, ...all];
     saveAdminComplaints(nextAll);

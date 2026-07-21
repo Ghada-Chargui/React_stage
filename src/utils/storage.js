@@ -86,6 +86,7 @@ export const normalizeAccount = (account = {}) => {
     experience: account.experience || 3,
     photo: account.photo || '',
     password: account.password || '',
+    verified: typeof account.verified === 'boolean' ? account.verified : false,
     languages: Array.isArray(account.languages) ? account.languages : (account.language ? [account.language] : []),
     specialties: Array.isArray(account.specialties) ? account.specialties : [],
     rating: account.rating || 4.7,
@@ -280,4 +281,15 @@ export const deleteUserAccount = (email) => {
   if (currentUser?.email === email) {
     saveStoredCurrentUser(null);
   }
+};
+
+export const toggleUserVerification = (email) => {
+  if (!email) return null;
+  const users = getStoredUsers();
+  const account = users[email];
+  if (!account) return null;
+
+  users[email] = { ...account, verified: !account.verified };
+  saveStoredUsers(users);
+  return users[email];
 };

@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
+import { BadgeCheck, ShieldOff } from 'lucide-react';
 import { getReservations } from '../utils/storage';
 import { getAdminComplaints } from '../data/adminMockData';
 
-function UserDetailCard({ user, onEdit }) {
+function UserDetailCard({ user, onEdit, onToggleVerify }) {
   const reservations = useMemo(() => {
     if (!user) return [];
     const all = getReservations();
@@ -33,11 +34,31 @@ function UserDetailCard({ user, onEdit }) {
             <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">Consulter le profil</p>
             <h3 className="mt-1 text-xl font-extrabold text-slate-900 dark:text-slate-100">{user.name}</h3>
             <span className="mt-1 inline-block rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 dark:bg-slate-800 dark:text-slate-300">{user.role}</span>
+            {isBabysitter && (
+              user.verified ? (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                  <BadgeCheck size={13} /> Vérifiée
+                </span>
+              ) : (
+                <span className="ml-2 inline-block rounded-full bg-slate-100 px-3 py-0.5 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">Non vérifiée</span>
+              )
+            )}
           </div>
         </div>
-        <button type="button" onClick={onEdit} className="shrink-0 rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white">
-          Modifier
-        </button>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <button type="button" onClick={onEdit} className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white">
+            Modifier
+          </button>
+          {isBabysitter && onToggleVerify && (
+            <button
+              type="button"
+              onClick={() => onToggleVerify(user)}
+              className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold ${user.verified ? 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-600/40 dark:hover:bg-red-900/20' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-600/40 dark:text-emerald-300 dark:hover:bg-emerald-900/20'}`}
+            >
+              {user.verified ? <><ShieldOff size={14} /> Retirer la vérification</> : <><BadgeCheck size={14} /> Vérifier ce profil</>}
+            </button>
+          )}
+        </div>
       </div>
 
       {isBabysitter && user.bio && (
