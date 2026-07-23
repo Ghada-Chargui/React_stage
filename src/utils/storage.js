@@ -158,7 +158,7 @@ export const getBabysitterProfiles = () => {
   }
 
   const fallbackProfiles = fallbackSitters.map((sitter) => ({ ...sitter }));
-  const seededUsers = Object.fromEntries(fallbackProfiles.map((sitter) => [sitter.email || `${sitter.id}@demo.local`, {
+  const seededEntries = Object.fromEntries(fallbackProfiles.map((sitter) => [sitter.email || `${sitter.id}@demo.local`, {
     email: sitter.email || `${sitter.id}@demo.local`,
     name: sitter.name,
     nom: sitter.name,
@@ -177,7 +177,12 @@ export const getBabysitterProfiles = () => {
     reviews: sitter.reviews,
     services: sitter.services,
   }]));
-  saveStoredUsers(seededUsers);
+  // IMPORTANT : on fusionne avec le registre existant au lieu de le remplacer.
+  // Cette fonction est censée être une simple lecture ; l'écraser wipait
+  // silencieusement tous les vrais comptes (parents, babysitters, admin)
+  // dès qu'aucune babysitter réelle n'existait encore.
+  const mergedUsers = { ...seededEntries, ...users };
+  saveStoredUsers(mergedUsers);
   return fallbackProfiles;
 };
 

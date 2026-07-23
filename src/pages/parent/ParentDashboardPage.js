@@ -1,7 +1,7 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Home, Search, CalendarRange, UserCircle, LogOut, Baby, History, MessageSquareWarning, Heart } from 'lucide-react';
-import { useMemo } from 'react';
-import { sitters } from '../../data/mockSitters';
+import { Home, Search, CalendarRange, UserCircle, Baby, History, MessageSquareWarning, Heart } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { getBabysitterProfiles, getFavoriteSitterIds, getReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
 function ParentDashboardPage({ user }) {
   const location = useLocation();
@@ -11,10 +11,39 @@ function ParentDashboardPage({ user }) {
     return JSON.parse(storedUser);
   }, [user]);
 
+  const [sitters, setSitters] = useState(() => getBabysitterProfiles());
+  const [reservations, setReservations] = useState(() => getReservations());
+  const [favorites, setFavorites] = useState(() => getFavoriteSitterIds(currentUser?.email));
+
+  useEffect(() => {
+    const syncData = () => {
+      setSitters(getBabysitterProfiles());
+      setReservations(getReservations());
+      setFavorites(getFavoriteSitterIds(currentUser?.email));
+    };
+    syncData();
+    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncData);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncData);
+  }, [currentUser]);
+
+  // Réservations de ce parent uniquement
+  const myReservations = useMemo(
+    () => reservations.filter((item) => item.parentEmail === currentUser?.email),
+    [reservations, currentUser]
+  );
+  const inProgressCount = myReservations.filter((item) => ['en attente', 'confirmée'].includes(item.status)).length;
+  const lastReservation = [...myReservations].sort((a, b) => `${b.date}${b.hour}`.localeCompare(`${a.date}${a.hour}`))[0];
+
+  // Babysitters réellement inscrites, les mieux notées en premier
+  const recommendedSitters = useMemo(
+    () => [...sitters].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0)).slice(0, 2),
+    [sitters]
+  );
+
   const stats = [
-    { label: 'Réservations en cours', value: '2' },
-    { label: 'Dernière babysitter', value: 'Solenne' },
-    { label: 'Note moyenne', value: '4.9/5' },
+    { label: 'Réservations en cours', value: inProgressCount },
+    { label: 'Dernière babysitter', value: lastReservation?.sitterName || '—' },
+    { label: 'Babysitters favorites', value: favorites.length },
   ];
 
   const navItems = [
@@ -81,9 +110,14 @@ function ParentDashboardPage({ user }) {
                 <Link to="/espace-parent/recherche" className="rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Voir tout</Link>
               </div>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {sitters.slice(0, 2).map((sitter) => (
+                {recommendedSitters.length === 0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400 md:col-span-2">Aucune babysitter disponible pour le moment.</p>
+                ) : recommendedSitters.map((sitter) => (
                   <div key={sitter.id} className="rounded-3xl border border-slate-200 p-5 dark:border-slate-700">
-                    <p className="font-extrabold text-slate-900 dark:text-slate-100">{sitter.name}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="font-extrabold text-slate-900 dark:text-slate-100">{sitter.name}</p>
+                      <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">★ {Number(sitter.rating).toFixed(1)}</span>
+                    </div>
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{sitter.location} • {sitter.rate} TND/h</p>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{sitter.availability.join(', ')}</p>
                   </div>

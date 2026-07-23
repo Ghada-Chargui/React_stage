@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
-import { saveStoredCurrentUser, deleteUserAccount } from '../../utils/storage';
+import { deleteUserAccount, persistUserAccount } from '../../utils/storage';
 import ConfirmModal from '../../components/ConfirmModal';
 
 const AVAILABILITY_OPTIONS = ['Matin', 'Après-midi', 'Soirée', 'Weekends'];
@@ -45,7 +45,7 @@ function BabysitterProfilePage() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const nextUser = { ...JSON.parse(localStorage.getItem('confiSitUser') || '{}'), ...profile };
-    saveStoredCurrentUser(nextUser);
+    persistUserAccount(nextUser, { persistSession: true });
     window.location.reload();
   };
 

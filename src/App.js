@@ -21,6 +21,7 @@ import BabysitterProfilePage from './pages/babysitter/BabysitterProfilePage';
 import BabysitterRequestsPage from './pages/babysitter/BabysitterRequestsPage';
 import BabysitterReviewsPage from './pages/babysitter/BabysitterReviewsPage';
 import BabysitterHistoryPage from './pages/babysitter/BabysitterHistoryPage';
+import BabysitterComplaintPage from './pages/babysitter/BabysitterComplaintPage';
 import AdminPage from './pages/AdminPage';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -220,6 +221,7 @@ function AppContent() {
               <Route path="demandes" element={<BabysitterRequestsPage />} />
               <Route path="avis" element={<BabysitterReviewsPage />} />
               <Route path="historique" element={<BabysitterHistoryPage />} />
+              <Route path="reclamation" element={<BabysitterComplaintPage />} />
             </Route>
           </Routes>
         </main>
