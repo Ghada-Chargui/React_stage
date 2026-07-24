@@ -202,5 +202,174 @@
     "description": "Un service tunisien de mise en relation entre parents et baby-sitters de confiance, pensé pour la sérénité de vos familles.",
     "signup": "S’inscrire",
     "copyright": "© 2026 Confi'Sit. Créé pour les familles tunisiennes avec soin."
+  },
+  "parentSpace": {
+    "dashboard": {
+      "tag": "Espace parent",
+      "greeting": "Bonjour {{name}}",
+      "subtitle": "Gérez vos gardes, vos réservations et votre profil.",
+      "defaultName": "parent",
+      "nav": {
+        "dashboard": "Tableau de bord",
+        "search": "Recherche",
+        "favorites": "Favoris",
+        "reservations": "Réservations",
+        "children": "Mes enfants",
+        "history": "Historique",
+        "complaint": "Réclamation",
+        "profile": "Profil"
+      },
+      "sidebarNote": {
+        "title": "À retenir",
+        "text": "Les réservations sont sauvegardées localement pour cette démo."
+      },
+      "welcome": {
+        "tag": "Bienvenue",
+        "text": "Votre espace de garde est prêt. Consultez vos réservations et trouvez la bonne babysitter rapidement."
+      },
+      "stats": {
+        "inProgress": "Réservations en cours",
+        "lastSitter": "Dernière babysitter",
+        "favorites": "Babysitters favorites"
+      },
+      "nearby": {
+        "tag": "Babysitters à proximité",
+        "title": "Quelques profils recommandés",
+        "viewAll": "Voir tout",
+        "empty": "Aucune babysitter disponible pour le moment."
+      }
+    },
+    "search": {
+      "tag": "Recherche",
+      "title": "Trouvez la babysitter idéale",
+      "filters": {
+        "zone": "Zone",
+        "all": "Toutes",
+        "maxRate": "Tarif max",
+        "minRating": "Note min",
+        "availability": "Disponibilité"
+      },
+      "removeFavorite": "Retirer des favoris",
+      "addFavorite": "Ajouter aux favoris",
+      "viewProfile": "Voir le profil"
+    },
+    "reservations": {
+      "tag": "Réservations",
+      "title": "Votre planning de garde",
+      "empty": "Aucune réservation pour le moment.",
+      "paymentCard": "Paiement par carte",
+      "paymentOnSite": "Paiement sur place",
+      "status": {
+        "en attente": "En attente",
+        "confirmée": "Confirmée",
+        "refusée": "Refusée",
+        "terminée": "Terminée",
+        "annulée": "Annulée"
+      },
+      "waitingConfirmation": "En attente de confirmation par la babysitter…",
+      "cancel": "Annuler",
+      "markComplete": "Marquer comme terminée",
+      "refused": "Cette babysitter n’a pas pu accepter votre demande.",
+      "leaveReview": "Donner un avis sur {{name}}",
+      "reviewPlaceholder": "Votre expérience avec cette babysitter...",
+      "sendReview": "Envoyer mon avis",
+      "yourReview": "Votre avis",
+      "newTag": "Nouvelle réservation",
+      "newTitle": "Planifier une garde",
+      "fields": {
+        "sitter": "Babysitter",
+        "date": "Date",
+        "hour": "Heure",
+        "duration": "Durée (heures)",
+        "address": "Adresse",
+        "payment": "Mode de paiement"
+      },
+      "save": "Enregistrer la réservation",
+      "pendingCount": "En attente : {{count}}",
+      "pendingNote": "Votre demande est envoyée directement à la babysitter, qui doit l’accepter avant la garde."
+    },
+    "favorites": {
+      "tag": "Favoris",
+      "title": "Vos babysitters préférées",
+      "emptyText": "Vous n’avez pas encore de favoris. Ajoutez-en depuis la <1>recherche</1>.",
+      "viewProfile": "Voir le profil",
+      "remove": "Retirer"
+    },
+    "children": {
+      "tag": "Profils enfants",
+      "title": "Vos enfants",
+      "subtitle": "Ces informations aident les babysitters à mieux préparer chaque garde.",
+      "empty": "Aucun profil enfant ajouté pour le moment.",
+      "yearsOld": "ans",
+      "allergies": "Allergies",
+      "edit": "Modifier",
+      "editTag": "Modifier",
+      "addTag": "Ajouter",
+      "editTitle": "Modifier un profil enfant",
+      "createTitle": "Créer un profil enfant",
+      "fields": {
+        "name": "Prénom",
+        "age": "Âge",
+        "allergies": "Allergies (optionnel)",
+        "allergiesPlaceholder": "Ex. arachides",
+        "notes": "Notes pour la babysitter"
+      },
+      "save": "Enregistrer",
+      "addChild": "Ajouter l’enfant",
+      "cancel": "Annuler"
+    },
+    "history": {
+      "tag": "Historique",
+      "title": "Vos gardes passées",
+      "empty": "Aucune garde terminée ou annulée pour le moment.",
+      "paymentUnknown": "Non renseigné",
+      "complaintPrompt": "Un souci avec l’une de ces gardes ? <1>Passer une réclamation</1>"
+    },
+    "complaint": {
+      "tag": "Support",
+      "title": "Passer une réclamation",
+      "description": "Décrivez le problème rencontré (paiement, comportement, retard...), notre équipe la traitera rapidement.",
+      "fields": {
+        "subject": "Sujet",
+        "subjectPlaceholder": "Ex. Retard de paiement",
+        "message": "Message",
+        "messagePlaceholder": "Décrivez la situation en détail"
+      },
+      "send": "Envoyer la réclamation",
+      "confirmation": "Votre réclamation a bien été envoyée à notre équipe support.",
+      "historyTag": "Historique",
+      "historyTitle": "Vos réclamations",
+      "empty": "Vous n’avez encore envoyé aucune réclamation.",
+      "status": {
+        "pending": "En attente",
+        "done": "Traité"
+      },
+      "supportReply": "Réponse du support"
+    },
+    "babysitterProfile": {
+      "notFound": "Babysitter introuvable",
+      "backToSearch": "Retour à la recherche",
+      "tag": "Profil détaillé",
+      "experience": "{{count}} ans d’expérience",
+      "inFavorites": "Dans vos favoris",
+      "addFavorite": "Ajouter aux favoris",
+      "about": "À propos",
+      "services": "Services",
+      "reviews": "Avis",
+      "noReviews": "Aucun avis pour le moment.",
+      "book": "Réserver"
+    },
+    "profile": {
+      "tag": "Profil parent",
+      "title": "Vos informations",
+      "fields": {
+        "name": "Nom",
+        "email": "Email",
+        "phone": "Téléphone",
+        "address": "Adresse",
+        "childrenCount": "Nombre d’enfants"
+      },
+      "save": "Enregistrer les changements"
+    }
   }
 }

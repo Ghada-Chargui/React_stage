@@ -202,5 +202,174 @@
     "description": "A Tunisian service connecting parents and trusted babysitters, designed for your family's peace of mind.",
     "signup": "Sign up",
     "copyright": "© 2026 Confi'Sit. Created with care for Tunisian families."
+  },
+  "parentSpace": {
+    "dashboard": {
+      "tag": "Parent space",
+      "greeting": "Hello {{name}}",
+      "subtitle": "Manage your bookings, reservations and profile.",
+      "defaultName": "parent",
+      "nav": {
+        "dashboard": "Dashboard",
+        "search": "Search",
+        "favorites": "Favorites",
+        "reservations": "Reservations",
+        "children": "My children",
+        "history": "History",
+        "complaint": "Complaint",
+        "profile": "Profile"
+      },
+      "sidebarNote": {
+        "title": "Good to know",
+        "text": "Reservations are saved locally for this demo."
+      },
+      "welcome": {
+        "tag": "Welcome",
+        "text": "Your childcare space is ready. Check your reservations and find the right babysitter quickly."
+      },
+      "stats": {
+        "inProgress": "Ongoing reservations",
+        "lastSitter": "Last babysitter",
+        "favorites": "Favorite babysitters"
+      },
+      "nearby": {
+        "tag": "Babysitters nearby",
+        "title": "A few recommended profiles",
+        "viewAll": "View all",
+        "empty": "No babysitter available at the moment."
+      }
+    },
+    "search": {
+      "tag": "Search",
+      "title": "Find the ideal babysitter",
+      "filters": {
+        "zone": "Area",
+        "all": "All",
+        "maxRate": "Max rate",
+        "minRating": "Min rating",
+        "availability": "Availability"
+      },
+      "removeFavorite": "Remove from favorites",
+      "addFavorite": "Add to favorites",
+      "viewProfile": "View profile"
+    },
+    "reservations": {
+      "tag": "Reservations",
+      "title": "Your childcare schedule",
+      "empty": "No reservations yet.",
+      "paymentCard": "Card payment",
+      "paymentOnSite": "Payment on site",
+      "status": {
+        "en attente": "Pending",
+        "confirmée": "Confirmed",
+        "refusée": "Declined",
+        "terminée": "Completed",
+        "annulée": "Cancelled"
+      },
+      "waitingConfirmation": "Waiting for the babysitter to confirm…",
+      "cancel": "Cancel",
+      "markComplete": "Mark as completed",
+      "refused": "This babysitter was unable to accept your request.",
+      "leaveReview": "Leave a review for {{name}}",
+      "reviewPlaceholder": "Your experience with this babysitter...",
+      "sendReview": "Send my review",
+      "yourReview": "Your review",
+      "newTag": "New reservation",
+      "newTitle": "Schedule a booking",
+      "fields": {
+        "sitter": "Babysitter",
+        "date": "Date",
+        "hour": "Time",
+        "duration": "Duration (hours)",
+        "address": "Address",
+        "payment": "Payment method"
+      },
+      "save": "Save reservation",
+      "pendingCount": "Pending: {{count}}",
+      "pendingNote": "Your request is sent directly to the babysitter, who must accept it before the booking."
+    },
+    "favorites": {
+      "tag": "Favorites",
+      "title": "Your favorite babysitters",
+      "emptyText": "You don’t have any favorites yet. Add some from the <1>search</1>.",
+      "viewProfile": "View profile",
+      "remove": "Remove"
+    },
+    "children": {
+      "tag": "Children profiles",
+      "title": "Your children",
+      "subtitle": "This information helps babysitters better prepare for each booking.",
+      "empty": "No child profile added yet.",
+      "yearsOld": "years old",
+      "allergies": "Allergies",
+      "edit": "Edit",
+      "editTag": "Edit",
+      "addTag": "Add",
+      "editTitle": "Edit a child profile",
+      "createTitle": "Create a child profile",
+      "fields": {
+        "name": "First name",
+        "age": "Age",
+        "allergies": "Allergies (optional)",
+        "allergiesPlaceholder": "E.g. peanuts",
+        "notes": "Notes for the babysitter"
+      },
+      "save": "Save",
+      "addChild": "Add child",
+      "cancel": "Cancel"
+    },
+    "history": {
+      "tag": "History",
+      "title": "Your past bookings",
+      "empty": "No completed or cancelled bookings yet.",
+      "paymentUnknown": "Not specified",
+      "complaintPrompt": "A problem with one of these bookings? <1>File a complaint</1>"
+    },
+    "complaint": {
+      "tag": "Support",
+      "title": "File a complaint",
+      "description": "Describe the issue you encountered (payment, behavior, delay...), our team will handle it quickly.",
+      "fields": {
+        "subject": "Subject",
+        "subjectPlaceholder": "E.g. Late payment",
+        "message": "Message",
+        "messagePlaceholder": "Describe the situation in detail"
+      },
+      "send": "Send complaint",
+      "confirmation": "Your complaint has been sent to our support team.",
+      "historyTag": "History",
+      "historyTitle": "Your complaints",
+      "empty": "You haven’t sent any complaints yet.",
+      "status": {
+        "pending": "Pending",
+        "done": "Resolved"
+      },
+      "supportReply": "Support reply"
+    },
+    "babysitterProfile": {
+      "notFound": "Babysitter not found",
+      "backToSearch": "Back to search",
+      "tag": "Detailed profile",
+      "experience": "{{count}} years of experience",
+      "inFavorites": "In your favorites",
+      "addFavorite": "Add to favorites",
+      "about": "About",
+      "services": "Services",
+      "reviews": "Reviews",
+      "noReviews": "No reviews yet.",
+      "book": "Book"
+    },
+    "profile": {
+      "tag": "Parent profile",
+      "title": "Your information",
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "childrenCount": "Number of children"
+      },
+      "save": "Save changes"
+    }
   }
 }
