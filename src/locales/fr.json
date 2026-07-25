@@ -371,5 +371,274 @@
       },
       "save": "Enregistrer les changements"
     }
+  },
+  "babysitterSpace": {
+    "dashboard": {
+      "tag": "Espace babysitter",
+      "greeting": "Bonjour {{name}}",
+      "subtitle": "Suivez vos demandes, votre profil et vos avis.",
+      "defaultName": "babysitter",
+      "nav": {
+        "dashboard": "Tableau de bord",
+        "profile": "Profil",
+        "requests": "Demandes",
+        "reviews": "Avis",
+        "history": "Historique",
+        "complaint": "Réclamation"
+      },
+      "welcome": "Bienvenue",
+      "welcomeText": "Votre activité est bien organisée. Consultez vos nouvelles demandes et gardez votre profil à jour.",
+      "stats": {
+        "pending": "Demandes en attente",
+        "nextBooking": "Prochaine garde",
+        "averageRating": "Note moyenne"
+      }
+    },
+    "profile": {
+      "tag": "Profil babysitter",
+      "title": "Modifier mon profil",
+      "fields": {
+        "photo": "Illustration / photo",
+        "photoPlaceholder": "URL de l’image",
+        "bio": "Bio",
+        "hourlyRate": "Tarif horaire (TND)",
+        "zone": "Zone couverte",
+        "experience": "Expérience (années)"
+      },
+      "save": "Enregistrer le profil",
+      "availabilityTag": "Disponibilités",
+      "availabilityTitle": "Gérer mes disponibilités",
+      "availabilityNote": "Ces créneaux sont visibles par les parents lors de leur recherche.",
+      "saveAvailability": "Enregistrer mes disponibilités",
+      "dangerZone": "Zone de danger",
+      "deleteTitle": "Supprimer mon profil",
+      "deleteWarning": "Cette action supprime définitivement votre compte et votre profil du stockage local. Elle est irréversible.",
+      "deleteButton": "Supprimer mon profil",
+      "confirmTitle": "Confirmer la suppression",
+      "confirmMessage": "Voulez-vous vraiment supprimer définitivement votre profil babysitter ? Cette action est irréversible."
+    },
+    "requests": {
+      "tag": "Demandes reçues",
+      "title": "Gérez les demandes de garde",
+      "empty": "Aucune demande reçue pour le moment.",
+      "accept": "Accepter",
+      "decline": "Refuser"
+    },
+    "reviews": {
+      "tag": "Avis reçus",
+      "averageTitle": "Note moyenne",
+      "averageSubtitle": "Vos parents vous apprécient.",
+      "empty": "Aucun avis reçu pour le moment."
+    },
+    "history": {
+      "tag": "Historique",
+      "title": "Vos gardes passées",
+      "empty": "Aucune garde terminée, annulée ou refusée pour le moment.",
+      "reviewReceived": "Avis reçu"
+    },
+    "complaint": {
+      "description": "Décrivez le problème rencontré (parent, paiement, comportement...), notre équipe la traitera rapidement.",
+      "subjectPlaceholder": "Ex. Annulation de dernière minute"
+    }
+  },
+  "common": {
+    "availability": {
+      "morning": "Matin",
+      "afternoon": "Après-midi",
+      "evening": "Soirée",
+      "weekends": "Weekends"
+    }
+  },
+  "adminSpace": {
+    "sidebar": {
+      "tag": "Administration",
+      "greeting": "Bonjour {{name}}",
+      "defaultName": "Admin",
+      "subtitle": "Supervision des utilisateurs et des réclamations."
+    },
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "statistics": "Statistiques",
+      "profiles": "Profils",
+      "complaints": "Réclamations"
+    },
+    "logout": "Déconnexion",
+    "roles": {
+      "parent": "Parent",
+      "babysitter": "Babysitter",
+      "admin": "Admin"
+    },
+    "accountStatus": {
+      "Actif": "Actif",
+      "En attente": "En attente",
+      "Suspendu": "Suspendu"
+    },
+    "months": {
+      "jan": "Jan",
+      "feb": "Fév",
+      "mar": "Mar",
+      "apr": "Avr",
+      "may": "Mai",
+      "jun": "Jun"
+    },
+    "priority": {
+      "normal": "Normale",
+      "urgent": "Urgente"
+    },
+    "dashboard": {
+      "welcome": "Bienvenue",
+      "title": "Tableau de bord admin",
+      "subtitle": "Surveillez la santé globale de la plateforme, les profils et les incidents de façon centralisée.",
+      "updatedView": "Vue mise à jour",
+      "cards": {
+        "totalParents": "Total parents",
+        "totalParentsDetail": "Comptes actifs et en attente",
+        "totalBabysitters": "Total babysitters",
+        "totalBabysittersDetail": "Profils disponibles",
+        "reservations": "Réservations",
+        "reservationsDetail": "Toutes périodes confondues",
+        "pendingComplaints": "Réclamations en attente",
+        "pendingComplaintsDetail": "À traiter rapidement",
+        "simulatedRevenue": "Revenu simulé (10%)",
+        "simulatedRevenueDetail": "Sur les gardes terminées",
+        "toVerify": "Babysitters à vérifier",
+        "toVerifyDetail": "Profils en attente de validation"
+      },
+      "charts": {
+        "registrationsTitle": "Évolution des inscriptions",
+        "registrationsDesc": "Parents vs babysitters",
+        "rolesTitle": "Répartition des rôles",
+        "rolesDesc": "Parents, babysitters et administrateurs"
+      },
+      "activity": {
+        "tag": "Activité récente",
+        "title": "Ce qui vient de se passer",
+        "empty": "Aucune activité récente.",
+        "today": "Aujourd’hui",
+        "yesterday": "Hier",
+        "daysAgo": "Il y a {{count}} jours",
+        "registered": "{{name}} s’est inscrit(e) en tant que {{role}}",
+        "complaintReceived": "Réclamation reçue : \"{{subject}}\" ({{name}})",
+        "reservationMade": "{{parent}} a réservé {{sitter}}",
+        "defaultParent": "Un parent",
+        "defaultSitter": "une babysitter"
+      }
+    },
+    "stats": {
+      "tag": "Statistiques détaillées",
+      "title": "Analyse de la plateforme",
+      "period": {
+        "7days": "7 jours",
+        "30days": "30 jours",
+        "year": "Année"
+      },
+      "charts": {
+        "monthlyRegistrations": "Inscriptions mensuelles",
+        "monthlyReservations": "Réservations par mois",
+        "monthlyReservationsDesc": "Volume mensuel"
+      },
+      "ranking": {
+        "tag": "Classement",
+        "title": "Top babysitters",
+        "empty": "Aucune babysitter enregistrée.",
+        "reservationCount": "{{count}} réservation(s)"
+      },
+      "reliability": {
+        "tag": "Fiabilité",
+        "title": "Taux d’acceptation des demandes",
+        "empty": "Aucune demande traitée pour le moment."
+      },
+      "support": {
+        "tag": "Support",
+        "title": "Délai moyen de traitement",
+        "description": "Entre le dépôt d’une réclamation et son passage à \"Traité\"."
+      },
+      "complaintsChart": {
+        "title": "Réclamations",
+        "description": "État des signalements"
+      }
+    },
+    "profiles": {
+      "tag": "Gestion des profils",
+      "title": "Liste des utilisateurs",
+      "searchPlaceholder": "Rechercher nom ou email",
+      "zonePlaceholder": "Zone géographique",
+      "allRoles": "Tous les rôles",
+      "allRatings": "Toutes les notes",
+      "ratingAndAbove": "★ {{rating}} et plus",
+      "allStatuses": "Tous les statuts"
+    },
+    "editForm": {
+      "name": "Nom",
+      "email": "Email",
+      "role": "Rôle",
+      "status": "Statut",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "children": "Enfants",
+      "hourlyRate": "Taux horaire",
+      "experience": "Expérience",
+      "zone": "Zone",
+      "availability": "Disponibilités",
+      "notes": "Notes",
+      "bio": "Bio",
+      "save": "Sauvegarder",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    },
+    "confirmDelete": {
+      "title": "Confirmer la suppression",
+      "message": "Cette action supprimera définitivement le profil du stockage local."
+    },
+    "complaints": {
+      "tag": "Gestion des réclamations",
+      "title": "Liste des signalements",
+      "allStatuses": "Tous les statuts",
+      "detail": "Détail",
+      "filedBy": "Déposée par {{name}} le {{date}}",
+      "viewProfile": "Voir le profil",
+      "thread": "Fil de discussion",
+      "replyLabel": "Répondre",
+      "replyPlaceholder": "Votre réponse au parent ou à la babysitter...",
+      "statusLabel": "Statut",
+      "priorityLabel": "Priorité",
+      "save": "Enregistrer",
+      "selectPrompt": "Sélectionnez une réclamation.",
+      "urgent": "Urgente"
+    },
+    "table": {
+      "name": "Nom",
+      "email": "Email",
+      "role": "Rôle",
+      "date": "Date",
+      "status": "Statut",
+      "verified": "Vérifié",
+      "verifiedYes": "Vérifiée",
+      "verifiedNo": "Non vérifiée"
+    },
+    "detail": {
+      "tag": "Consulter le profil",
+      "edit": "Modifier",
+      "verify": "Vérifier ce profil",
+      "unverify": "Retirer la vérification",
+      "contact": "Coordonnées",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "registeredAt": "Date d’inscription",
+      "specificInfo": "Infos spécifiques",
+      "children": "Enfants",
+      "notes": "Notes",
+      "hourlyRate": "Taux horaire",
+      "experience": "Expérience",
+      "zone": "Zone",
+      "availability": "Disponibilités",
+      "averageRating": "Note moyenne",
+      "reviewCount": "{{count}} avis",
+      "adminAccount": "Compte administrateur.",
+      "recentReviews": "Derniers avis reçus",
+      "reservations": "Réservations ({{count}})",
+      "noReservations": "Aucune réservation liée à ce compte.",
+      "complaintsFiled": "Réclamations déposées ({{count}})"
+    }
   }
 }

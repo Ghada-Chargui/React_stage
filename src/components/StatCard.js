@@ -1,6 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { ArrowUpRight } from 'lucide-react';
 
 function StatCard({ icon: Icon, label, value, detail }) {
+  const { t } = useTranslation();
+
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 dark:border-slate-700 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3">
@@ -15,7 +18,7 @@ function StatCard({ icon: Icon, label, value, detail }) {
       </div>
       <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-orange-600">
         <ArrowUpRight size={16} />
-        <span>Vue mise à jour</span>
+        <span>{t('adminSpace.dashboard.updatedView')}</span>
       </div>
     </div>
   );

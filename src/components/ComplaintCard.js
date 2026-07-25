@@ -1,5 +1,9 @@
+import { useTranslation } from 'react-i18next';
+
 function ComplaintCard({ complaint, onSelect }) {
+  const { t } = useTranslation();
   const priority = complaint.priority || 'Normale';
+  const statusLabel = complaint.status === 'Traité' ? t('parentSpace.complaint.status.done') : t('parentSpace.complaint.status.pending');
 
   return (
     <button type="button" onClick={onSelect} className="w-full rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 dark:border-slate-700 dark:bg-slate-900">
@@ -10,10 +14,10 @@ function ComplaintCard({ complaint, onSelect }) {
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${complaint.status === 'Traité' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'}`}>
-            {complaint.status}
+            {statusLabel}
           </span>
           {priority === 'Urgente' && (
-            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">Urgente</span>
+            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">{t('adminSpace.complaints.urgent')}</span>
           )}
         </div>
       </div>

@@ -371,5 +371,274 @@
       },
       "save": "حفظ التغييرات"
     }
+  },
+  "babysitterSpace": {
+    "dashboard": {
+      "tag": "مساحة المربية",
+      "greeting": "مرحباً {{name}}",
+      "subtitle": "تابعي طلباتك وملفك الشخصي وتقييماتك.",
+      "defaultName": "المربية",
+      "nav": {
+        "dashboard": "لوحة التحكم",
+        "profile": "الملف الشخصي",
+        "requests": "الطلبات",
+        "reviews": "التقييمات",
+        "history": "السجل",
+        "complaint": "شكوى"
+      },
+      "welcome": "مرحباً بك",
+      "welcomeText": "نشاطك منظم جيداً. تحققي من طلباتك الجديدة وحافظي على تحديث ملفك الشخصي.",
+      "stats": {
+        "pending": "الطلبات قيد الانتظار",
+        "nextBooking": "الرعاية القادمة",
+        "averageRating": "متوسط التقييم"
+      }
+    },
+    "profile": {
+      "tag": "ملف المربية",
+      "title": "تعديل ملفي الشخصي",
+      "fields": {
+        "photo": "الصورة التوضيحية",
+        "photoPlaceholder": "رابط الصورة",
+        "bio": "نبذة",
+        "hourlyRate": "التعرفة بالساعة (دينار)",
+        "zone": "المنطقة المغطاة",
+        "experience": "الخبرة (سنوات)"
+      },
+      "save": "حفظ الملف الشخصي",
+      "availabilityTag": "التوفر",
+      "availabilityTitle": "إدارة أوقات توفري",
+      "availabilityNote": "هذه الأوقات مرئية للوالدين أثناء بحثهم.",
+      "saveAvailability": "حفظ أوقات توفري",
+      "dangerZone": "منطقة الخطر",
+      "deleteTitle": "حذف ملفي الشخصي",
+      "deleteWarning": "يؤدي هذا الإجراء إلى حذف حسابك وملفك الشخصي نهائياً من التخزين المحلي. لا يمكن التراجع عنه.",
+      "deleteButton": "حذف ملفي الشخصي",
+      "confirmTitle": "تأكيد الحذف",
+      "confirmMessage": "هل تريدين حقاً حذف ملفك الشخصي كمربية نهائياً؟ هذا الإجراء لا رجعة فيه."
+    },
+    "requests": {
+      "tag": "الطلبات المستلمة",
+      "title": "إدارة طلبات الرعاية",
+      "empty": "لم يتم استلام أي طلب حتى الآن.",
+      "accept": "قبول",
+      "decline": "رفض"
+    },
+    "reviews": {
+      "tag": "التقييمات المستلمة",
+      "averageTitle": "متوسط التقييم",
+      "averageSubtitle": "الوالدون يقدّرونك.",
+      "empty": "لا توجد تقييمات مستلمة حالياً."
+    },
+    "history": {
+      "tag": "السجل",
+      "title": "رعاياتك السابقة",
+      "empty": "لا توجد رعاية منتهية أو ملغاة أو مرفوضة حالياً.",
+      "reviewReceived": "تقييم مستلم"
+    },
+    "complaint": {
+      "description": "صفي المشكلة التي واجهتِها (الوالد، الدفع، السلوك...)، سيتعامل فريقنا معها بسرعة.",
+      "subjectPlaceholder": "مثال: إلغاء في اللحظة الأخيرة"
+    }
+  },
+  "common": {
+    "availability": {
+      "morning": "صباحاً",
+      "afternoon": "بعد الظهر",
+      "evening": "مساءً",
+      "weekends": "عطلة نهاية الأسبوع"
+    }
+  },
+  "adminSpace": {
+    "sidebar": {
+      "tag": "الإدارة",
+      "greeting": "مرحباً {{name}}",
+      "defaultName": "المشرف",
+      "subtitle": "الإشراف على المستخدمين والشكاوى."
+    },
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "statistics": "الإحصائيات",
+      "profiles": "الملفات الشخصية",
+      "complaints": "الشكاوى"
+    },
+    "logout": "تسجيل الخروج",
+    "roles": {
+      "parent": "والد",
+      "babysitter": "مربية",
+      "admin": "مشرف"
+    },
+    "accountStatus": {
+      "Actif": "نشط",
+      "En attente": "قيد الانتظار",
+      "Suspendu": "موقوف"
+    },
+    "months": {
+      "jan": "جانفي",
+      "feb": "فيفري",
+      "mar": "مارس",
+      "apr": "أفريل",
+      "may": "ماي",
+      "jun": "جوان"
+    },
+    "priority": {
+      "normal": "عادية",
+      "urgent": "عاجلة"
+    },
+    "dashboard": {
+      "welcome": "مرحباً بك",
+      "title": "لوحة تحكم المشرف",
+      "subtitle": "راقب الوضع العام للمنصة والملفات الشخصية والحوادث بشكل مركزي.",
+      "updatedView": "عرض محدّث",
+      "cards": {
+        "totalParents": "إجمالي الوالدين",
+        "totalParentsDetail": "حسابات نشطة وقيد الانتظار",
+        "totalBabysitters": "إجمالي المربيات",
+        "totalBabysittersDetail": "ملفات متاحة",
+        "reservations": "الحجوزات",
+        "reservationsDetail": "كل الفترات",
+        "pendingComplaints": "شكاوى قيد الانتظار",
+        "pendingComplaintsDetail": "تحتاج معالجة سريعة",
+        "simulatedRevenue": "الإيرادات المحاكاة (10%)",
+        "simulatedRevenueDetail": "من الرعايات المنتهية",
+        "toVerify": "مربيات بانتظار التحقق",
+        "toVerifyDetail": "ملفات بانتظار المصادقة"
+      },
+      "charts": {
+        "registrationsTitle": "تطور التسجيلات",
+        "registrationsDesc": "الوالدون مقابل المربيات",
+        "rolesTitle": "توزيع الأدوار",
+        "rolesDesc": "الوالدون والمربيات والمشرفون"
+      },
+      "activity": {
+        "tag": "النشاط الأخير",
+        "title": "ما حدث للتو",
+        "empty": "لا يوجد نشاط حديث.",
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "daysAgo": "قبل {{count}} أيام",
+        "registered": "قام {{name}} بالتسجيل كـ {{role}}",
+        "complaintReceived": "تم استلام شكوى: \"{{subject}}\" ({{name}})",
+        "reservationMade": "قام {{parent}} بحجز {{sitter}}",
+        "defaultParent": "أحد الوالدين",
+        "defaultSitter": "مربية"
+      }
+    },
+    "stats": {
+      "tag": "إحصائيات تفصيلية",
+      "title": "تحليل المنصة",
+      "period": {
+        "7days": "7 أيام",
+        "30days": "30 يوماً",
+        "year": "سنة"
+      },
+      "charts": {
+        "monthlyRegistrations": "التسجيلات الشهرية",
+        "monthlyReservations": "الحجوزات الشهرية",
+        "monthlyReservationsDesc": "الحجم الشهري"
+      },
+      "ranking": {
+        "tag": "الترتيب",
+        "title": "أفضل المربيات",
+        "empty": "لا توجد مربية مسجلة.",
+        "reservationCount": "{{count}} حجز/حجوزات"
+      },
+      "reliability": {
+        "tag": "الموثوقية",
+        "title": "معدل قبول الطلبات",
+        "empty": "لم تتم معالجة أي طلب حتى الآن."
+      },
+      "support": {
+        "tag": "الدعم",
+        "title": "متوسط زمن المعالجة",
+        "description": "بين إيداع الشكوى وتحويلها إلى \"تمت المعالجة\"."
+      },
+      "complaintsChart": {
+        "title": "الشكاوى",
+        "description": "حالة البلاغات"
+      }
+    },
+    "profiles": {
+      "tag": "إدارة الملفات الشخصية",
+      "title": "قائمة المستخدمين",
+      "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني",
+      "zonePlaceholder": "المنطقة الجغرافية",
+      "allRoles": "كل الأدوار",
+      "allRatings": "كل التقييمات",
+      "ratingAndAbove": "★ {{rating}} فما فوق",
+      "allStatuses": "كل الحالات"
+    },
+    "editForm": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "status": "الحالة",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "children": "الأطفال",
+      "hourlyRate": "التعرفة بالساعة",
+      "experience": "الخبرة",
+      "zone": "المنطقة",
+      "availability": "التوفر",
+      "notes": "ملاحظات",
+      "bio": "نبذة",
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "delete": "حذف"
+    },
+    "confirmDelete": {
+      "title": "تأكيد الحذف",
+      "message": "سيؤدي هذا الإجراء إلى حذف الملف الشخصي نهائياً من التخزين المحلي."
+    },
+    "complaints": {
+      "tag": "إدارة الشكاوى",
+      "title": "قائمة البلاغات",
+      "allStatuses": "كل الحالات",
+      "detail": "التفاصيل",
+      "filedBy": "قدّمها {{name}} بتاريخ {{date}}",
+      "viewProfile": "عرض الملف الشخصي",
+      "thread": "سجل المحادثة",
+      "replyLabel": "الرد",
+      "replyPlaceholder": "ردك على الوالد أو المربية...",
+      "statusLabel": "الحالة",
+      "priorityLabel": "الأولوية",
+      "save": "حفظ",
+      "selectPrompt": "اختر شكوى.",
+      "urgent": "عاجلة"
+    },
+    "table": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "date": "التاريخ",
+      "status": "الحالة",
+      "verified": "موثّق",
+      "verifiedYes": "موثّقة",
+      "verifiedNo": "غير موثّقة"
+    },
+    "detail": {
+      "tag": "عرض الملف الشخصي",
+      "edit": "تعديل",
+      "verify": "توثيق هذا الملف",
+      "unverify": "إلغاء التوثيق",
+      "contact": "معلومات الاتصال",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "registeredAt": "تاريخ التسجيل",
+      "specificInfo": "معلومات خاصة",
+      "children": "الأطفال",
+      "notes": "ملاحظات",
+      "hourlyRate": "التعرفة بالساعة",
+      "experience": "الخبرة",
+      "zone": "المنطقة",
+      "availability": "التوفر",
+      "averageRating": "متوسط التقييم",
+      "reviewCount": "{{count}} تقييم",
+      "adminAccount": "حساب مشرف.",
+      "recentReviews": "آخر التقييمات المستلمة",
+      "reservations": "الحجوزات ({{count}})",
+      "noReservations": "لا توجد حجوزات مرتبطة بهذا الحساب.",
+      "complaintsFiled": "الشكاوى المقدّمة ({{count}})"
+    }
   }
 }
