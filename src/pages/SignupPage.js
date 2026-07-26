@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import ReCAPTCHA from 'react-google-recaptcha';
 import AuthNotice from '../components/AuthNotice';
 import PasswordInput from '../components/PasswordInput';
 import { persistUserAccount, getStoredUsers } from '../utils/storage';
+import { RECAPTCHA_SITE_KEY } from '../utils/recaptchaConfig';
 
 function SignupPage({ onSignup }) {
   const { t } = useTranslation();
@@ -14,6 +16,7 @@ function SignupPage({ onSignup }) {
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
 
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
@@ -53,6 +56,7 @@ function SignupPage({ onSignup }) {
     if (!form.password || form.password.length < 8) e.password = t('auth.signup.fields.passwordError');
     if (form.password !== form.passwordConfirm) e.passwordConfirm = t('auth.signup.fields.passwordConfirmError');
     if (users[form.email]) e.email = t('auth.signup.fields.emailError');
+    if (!captchaToken) e.captcha = 'Merci de valider le reCAPTCHA avant de continuer.';
     if (role === 'babysitter') {
       if (!form.zone) e.zone = 'La zone est requise';
       if (!form.hourlyRate) e.hourlyRate = 'Le tarif horaire est requis';
@@ -267,6 +271,17 @@ function SignupPage({ onSignup }) {
                 </>
               )}
               {notice && <div className="md:col-span-2"><AuthNotice type="success">{notice}</AuthNotice></div>}
+              <div className="md:col-span-2">
+                <ReCAPTCHA
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={(token) => {
+                    setCaptchaToken(token);
+                    if (errors.captcha) setErrors((current) => ({ ...current, captcha: null }));
+                  }}
+                  onExpired={() => setCaptchaToken(null)}
+                />
+                {errors.captcha && <p className="mt-2 text-sm text-red-600">{errors.captcha}</p>}
+              </div>
               <div className="md:col-span-2">
                 <button type="submit" disabled={isSubmitting} className="w-full rounded-full bg-gradient-to-r from-orange-600 to-amber-600 px-8 py-4.5 text-base font-semibold text-white shadow-[0_20px_50px_rgba(249,115,22,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_25px_60px_rgba(249,115,22,0.35)] focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:bg-orange-300">
                   {isSubmitting ? t('auth.signup.submitLoading') : t('auth.signup.submitButton')}
