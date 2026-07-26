@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Download } from 'lucide-react';
 import { getBabysitterProfiles, addBabysitterReview, getReservations, saveReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
+import { generateReservationReceipt } from '../../utils/generateReceipt';
 
 function ParentReservationsPage() {
   const { t } = useTranslation();
@@ -67,6 +69,11 @@ function ParentReservationsPage() {
 
   const cancelReservation = (id) => updateReservation(id, { status: 'annulée' });
   const completeReservation = (id) => updateReservation(id, { status: 'terminée' });
+
+  const handleDownloadReceipt = (reservation) => {
+    const sitter = sitters.find((item) => item.email === reservation.sitterEmail);
+    generateReservationReceipt(reservation, sitter);
+  };
 
   const updateReviewDraft = (id, field, value) => {
     setReviewDrafts((current) => ({ ...current, [id]: { ...(current[id] || { stars: 5, comment: '' }), [field]: value } }));
@@ -159,6 +166,15 @@ function ParentReservationsPage() {
                   <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     {t('parentSpace.reservations.yourReview')} : ★ {reservation.review.stars} — {reservation.review.comment}
                   </div>
+                )}
+                {reservation.status === 'terminée' && (
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadReceipt(reservation)}
+                    className="mt-3 flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-600/40 dark:text-amber-300 dark:hover:bg-amber-900/20"
+                  >
+                    <Download size={14} /> Télécharger le reçu (PDF)
+                  </button>
                 )}
               </div>
             ))}

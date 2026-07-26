@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trans, useTranslation } from 'react-i18next';
-import { History } from 'lucide-react';
-import { getReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
+import { History, Download } from 'lucide-react';
+import { getReservations, getBabysitterProfiles, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
+import { generateReservationReceipt } from '../../utils/generateReceipt';
 
 function ParentHistoryPage() {
   const { t } = useTranslation();
@@ -12,13 +13,22 @@ function ParentHistoryPage() {
   }, []);
 
   const [reservations, setReservations] = useState(() => getReservations());
+  const [sitters, setSitters] = useState(() => getBabysitterProfiles());
 
   useEffect(() => {
-    const syncReservations = () => setReservations(getReservations());
+    const syncReservations = () => {
+      setReservations(getReservations());
+      setSitters(getBabysitterProfiles());
+    };
     syncReservations();
     window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
     return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
   }, []);
+
+  const handleDownloadReceipt = (reservation) => {
+    const sitter = sitters.find((item) => item.email === reservation.sitterEmail);
+    generateReservationReceipt(reservation, sitter);
+  };
 
   const pastReservations = useMemo(
     () => reservations.filter((item) => item.parentEmail === currentUser?.email && ['terminée', 'annulée', 'refusée'].includes(item.status)),
@@ -65,6 +75,15 @@ function ParentHistoryPage() {
               <div className="mt-3 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                 {t('parentSpace.reservations.yourReview')} : ★ {reservation.review.stars} — {reservation.review.comment}
               </div>
+            )}
+            {reservation.status === 'terminée' && (
+              <button
+                type="button"
+                onClick={() => handleDownloadReceipt(reservation)}
+                className="mt-3 flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-600/40 dark:text-amber-300 dark:hover:bg-amber-900/20"
+              >
+                <Download size={14} /> Télécharger le reçu (PDF)
+              </button>
             )}
           </div>
         ))}
