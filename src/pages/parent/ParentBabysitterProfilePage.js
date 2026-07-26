@@ -1,92 +1,74 @@
-import { useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Heart } from 'lucide-react';
-import { getBabysitterProfiles, getFavoriteSitterIds, toggleFavoriteSitter } from '../../utils/storage';
+import { getReservations, saveReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 
-function ParentBabysitterProfilePage() {
+function BabysitterRequestsPage() {
   const { t } = useTranslation();
-  const { id } = useParams();
-  const sitter = useMemo(() => getBabysitterProfiles().find((item) => item.id === id), [id]);
   const currentUser = useMemo(() => {
     const storedUser = localStorage.getItem('confiSitUser');
     return storedUser ? JSON.parse(storedUser) : null;
   }, []);
-  const [favorites, setFavorites] = useState(() => getFavoriteSitterIds(currentUser?.email));
 
-  const handleToggleFavorite = () => {
-    if (!currentUser?.email || !sitter) return;
-    setFavorites(toggleFavoriteSitter(currentUser.email, sitter.id));
+  const [allReservations, setAllReservations] = useState(() => getReservations());
+
+  useEffect(() => {
+    const syncReservations = () => setAllReservations(getReservations());
+    syncReservations();
+    window.addEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
+    return () => window.removeEventListener(STORAGE_CHANGE_EVENT_NAME, syncReservations);
+  }, []);
+
+  // Demandes reçues par CETTE babysitter, envoyées par les parents depuis leur espace réservation
+  const requests = useMemo(
+    () => allReservations.filter((item) => item.sitterEmail === currentUser?.email),
+    [allReservations, currentUser]
+  );
+
+  const updateStatus = (id, status) => {
+    const next = allReservations.map((item) => (item.id === id ? { ...item, status } : item));
+    setAllReservations(next);
+    saveReservations(next);
   };
 
-  if (!sitter) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <p className="text-lg font-extrabold text-slate-900 dark:text-slate-100">{t('parentSpace.babysitterProfile.notFound')}</p>
-        <Link to="/espace-parent/recherche" className="mt-4 inline-flex rounded-full bg-amber-100 px-5 py-2.5 text-sm font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">{t('parentSpace.babysitterProfile.backToSearch')}</Link>
-      </div>
-    );
-  }
+  const statusBadgeClass = (status) => {
+    if (status === 'terminée') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
+    if (status === 'acceptée' || status === 'confirmée') return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
+    if (status === 'annulée' || status === 'refusée') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300';
+    return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+  };
 
-  const isFavorite = favorites.includes(sitter.id);
+  const statusLabel = (status) => t(`parentSpace.reservations.status.${status}`, status);
+  const paymentLabel = (method) => (method === 'carte' ? t('parentSpace.reservations.paymentCard') : t('parentSpace.reservations.paymentOnSite'));
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center">
-            <img src={sitter.image} alt={sitter.name} className="h-32 w-32 rounded-3xl object-cover" />
-            <div>
-              <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">{t('parentSpace.babysitterProfile.tag')}</p>
-              <h2 className="mt-2 text-3xl font-extrabold text-slate-900 dark:text-slate-100">{sitter.name}</h2>
-              <p className="mt-2 text-slate-600 dark:text-slate-300">{sitter.location} • {sitter.rate} TND/h • {t('parentSpace.babysitterProfile.experience', { count: sitter.experience })}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {sitter.languages.map((language) => <span key={language} className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">{language}</span>)}
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">{t('babysitterSpace.requests.tag')}</p>
+      <h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t('babysitterSpace.requests.title')}</h2>
+      <div className="mt-6 space-y-4">
+        {requests.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('babysitterSpace.requests.empty')}</p>
+        ) : requests.map((request) => (
+          <div key={request.id} className="rounded-3xl border border-slate-200 p-4 dark:border-slate-700">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-extrabold text-slate-900 dark:text-slate-100">{request.parentName}</p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{request.date} • {request.hour} • {request.duration}</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{request.address}</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{paymentLabel(request.paymentMethod)}</p>
               </div>
+              <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${statusBadgeClass(request.status)}`}>{statusLabel(request.status)}</span>
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleToggleFavorite}
-            className={`flex shrink-0 items-center gap-2 self-start rounded-full border px-5 py-2.5 text-sm font-semibold transition md:self-center ${isFavorite ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-600/40 dark:bg-red-900/20 dark:text-red-400' : 'border-slate-200 bg-white text-slate-700 hover:text-red-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200'}`}
-          >
-            <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
-            {isFavorite ? t('parentSpace.babysitterProfile.inFavorites') : t('parentSpace.babysitterProfile.addFavorite')}
-          </button>
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{t('parentSpace.babysitterProfile.about')}</h3>
-          <p className="mt-4 text-slate-600 dark:text-slate-300">{sitter.bio}</p>
-          <div className="mt-6">
-            <p className="text-sm font-extrabold uppercase tracking-[0.3em] text-slate-500">{t('parentSpace.babysitterProfile.services')}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {sitter.services.map((service) => <span key={service} className="rounded-full bg-orange-50 px-3 py-1 text-sm text-orange-700 dark:bg-orange-900/20 dark:text-orange-300">{service}</span>)}
-            </div>
-          </div>
-        </div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{t('parentSpace.babysitterProfile.reviews')}</h3>
-          <div className="mt-4 space-y-3">
-            {sitter.reviews.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t('parentSpace.babysitterProfile.noReviews')}</p>
-            ) : sitter.reviews.map((review, index) => (
-              <div key={`${review.name}-${index}`} className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-slate-900 dark:text-slate-100">{review.name}</p>
-                  <span className="text-sm font-semibold text-amber-700">★ {review.stars}</span>
-                </div>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{review.comment}</p>
+            {request.status === 'en attente' && (
+              <div className="mt-4 flex gap-3">
+                <button type="button" onClick={() => updateStatus(request.id, 'confirmée')} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">{t('babysitterSpace.requests.accept')}</button>
+                <button type="button" onClick={() => updateStatus(request.id, 'refusée')} className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white">{t('babysitterSpace.requests.decline')}</button>
               </div>
-            ))}
+            )}
           </div>
-          <Link to="/espace-parent/reservations" className="mt-6 block w-full rounded-full bg-gradient-to-r from-orange-600 to-amber-600 px-5 py-3 text-center text-sm font-semibold text-white">{t('parentSpace.babysitterProfile.book')}</Link>
-        </div>
+        ))}
       </div>
     </div>
   );
 }
 
-export default ParentBabysitterProfilePage;
+export default BabysitterRequestsPage;

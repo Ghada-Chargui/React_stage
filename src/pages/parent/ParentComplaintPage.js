@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MessageSquareWarning } from 'lucide-react';
 import { getAdminComplaints, saveAdminComplaints } from '../../data/adminMockData';
+import { notifyComplaintReceived, notifyAdminOfComplaint } from '../../utils/emailNotifications';
 
 function ParentComplaintPage() {
   const { t } = useTranslation();
@@ -41,6 +42,8 @@ function ParentComplaintPage() {
     setMyComplaints(nextAll.filter((item) => item.userName === currentUser?.name));
     setConfirmation(t('parentSpace.complaint.confirmation'));
     setForm({ subject: '', message: '' });
+    notifyComplaintReceived(nextComplaint, currentUser?.email);
+    notifyAdminOfComplaint(nextComplaint);
   };
 
   const statusLabel = (status) => (status === 'Traité' ? t('parentSpace.complaint.status.done') : t('parentSpace.complaint.status.pending'));

@@ -30,6 +30,7 @@ import PrivateRoute from './components/PrivateRoute';
 import ScrollToTop from './components/ScrollToTop';
 import { initializeAdminDemoData } from './data/adminMockData';
 import { getStoredCurrentUser, getStoredUsers, normalizeRole, persistUserAccount, saveStoredCurrentUser } from './utils/storage';
+import { initEmailNotifications } from './utils/emailNotifications';
 
 function AppContent() {
   const { i18n, t } = useTranslation();
@@ -101,6 +102,7 @@ function AppContent() {
   }, [i18n]);
 
   useEffect(() => {
+    initEmailNotifications();
     initializeAdminDemoData();
     const storedUser = getStoredCurrentUser();
     if (storedUser) {
