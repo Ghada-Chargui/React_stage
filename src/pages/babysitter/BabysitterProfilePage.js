@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Sparkles, Check, X } from 'lucide-react';
 import { deleteUserAccount, persistUserAccount } from '../../utils/storage';
+import { enhanceBio } from '../../utils/bioAssistant';
 import ConfirmModal from '../../components/ConfirmModal';
 
 const AVAILABILITY_OPTIONS = ['Matin', 'Après-midi', 'Soirée', 'Weekends'];
@@ -25,6 +26,8 @@ function BabysitterProfilePage() {
     experience: '3',
   });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [suggestedBio, setSuggestedBio] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('confiSitUser');
@@ -49,6 +52,27 @@ function BabysitterProfilePage() {
         : [...current.availability, slot],
     }));
   };
+
+  const handleEnhanceBio = async () => {
+    setIsEnhancing(true);
+    setSuggestedBio(null);
+    try {
+      const result = await enhanceBio(profile.bio, {
+        experience: profile.experience,
+        zone: profile.zone,
+      });
+      setSuggestedBio(result);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const acceptSuggestion = () => {
+    setProfile((current) => ({ ...current, bio: suggestedBio }));
+    setSuggestedBio(null);
+  };
+
+  const dismissSuggestion = () => setSuggestedBio(null);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -76,8 +100,33 @@ function BabysitterProfilePage() {
             <input value={profile.photo} onChange={(event) => setProfile({ ...profile, photo: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" placeholder={t('babysitterSpace.profile.fields.photoPlaceholder')} />
           </label>
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 md:col-span-2">
-            {t('babysitterSpace.profile.fields.bio')}
-            <textarea rows="4" value={profile.bio} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" />
+            <div className="flex items-center justify-between">
+              <span>{t('babysitterSpace.profile.fields.bio')}</span>
+              <button
+                type="button"
+                onClick={handleEnhanceBio}
+                disabled={isEnhancing}
+                className="flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300"
+              >
+                <Sparkles size={13} />
+                {isEnhancing ? 'Génération en cours…' : 'Améliorer avec l’assistant'}
+              </button>
+            </div>
+            <textarea rows="4" value={profile.bio} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" placeholder="Décris-toi en quelques mots (expérience, traits de caractère, avec qui tu aimes travailler...) puis clique sur 'Améliorer'." />
+            {suggestedBio && (
+              <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-600/30 dark:bg-amber-900/10">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">Suggestion</p>
+                <p className="mt-2 text-sm text-slate-700 dark:text-slate-200">{suggestedBio}</p>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={acceptSuggestion} className="flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                    <Check size={13} /> Utiliser cette version
+                  </button>
+                  <button type="button" onClick={dismissSuggestion} className="flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800">
+                    <X size={13} /> Ignorer
+                  </button>
+                </div>
+              </div>
+            )}
           </label>
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {t('babysitterSpace.profile.fields.hourlyRate')}
