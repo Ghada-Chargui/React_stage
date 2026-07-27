@@ -10,6 +10,7 @@ import UserDetailCard from '../components/UserDetailCard';
 import ConfirmModal from '../components/ConfirmModal';
 import ComplaintCard from '../components/ComplaintCard';
 import { getAdminComplaints, saveAdminComplaints, initializeAdminDemoData } from '../data/adminMockData';
+import { detectComplaintPriority } from '../utils/complaintPriority';
 import { getRegisteredUsers, saveRegisteredUsers, getReservations, toggleUserVerification } from '../utils/storage';
 
 const COLORS = ['#f59e0b', '#3b82f6', '#14b8a6', '#a855f7'];
@@ -686,6 +687,14 @@ function AdminPage() {
                           </select>
                         </label>
                       </div>
+                      {(() => {
+                        const detection = detectComplaintPriority(selectedComplaint.subject, selectedComplaint.message);
+                        return detection.matchedKeyword ? (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            🔎 Priorité suggérée automatiquement à la création (mot-clé détecté : « {detection.matchedKeyword} »)
+                          </p>
+                        ) : null;
+                      })()}
                       <button type="submit" className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white">{t('adminSpace.complaints.save')}</button>
                     </form>
                   </div>

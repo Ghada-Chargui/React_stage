@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { MessageSquareWarning } from 'lucide-react';
 import { getAdminComplaints, saveAdminComplaints } from '../../data/adminMockData';
 import { notifyComplaintReceived, notifyAdminOfComplaint } from '../../utils/emailNotifications';
+import { detectComplaintPriority } from '../../utils/complaintPriority';
 
 function BabysitterComplaintPage() {
   const { t } = useTranslation();
@@ -20,12 +21,18 @@ function BabysitterComplaintPage() {
     setMyComplaints(all.filter((item) => item.userName === currentUser?.name));
   }, [currentUser]);
 
+  const livePriority = useMemo(
+    () => detectComplaintPriority(form.subject, form.message),
+    [form.subject, form.message]
+  );
+
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!form.subject || !form.message) return;
 
     const all = getAdminComplaints();
     const today = new Date().toISOString().slice(0, 10);
+    const { priority } = detectComplaintPriority(form.subject, form.message);
     const nextComplaint = {
       id: `complaint-${Date.now()}`,
       userName: currentUser?.name || 'Babysitter',
@@ -33,7 +40,7 @@ function BabysitterComplaintPage() {
       message: form.message,
       date: today,
       status: 'En attente',
-      priority: 'Normale',
+      priority,
       note: '',
       messages: [{ author: currentUser?.name || 'Babysitter', text: form.message, date: today }],
       resolvedAt: null,
@@ -72,6 +79,11 @@ function BabysitterComplaintPage() {
             {t('parentSpace.complaint.fields.message')}
             <textarea value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} rows="5" placeholder={t('parentSpace.complaint.fields.messagePlaceholder')} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" required />
           </label>
+          {livePriority.priority === 'Urgente' && (form.subject || form.message) && (
+            <div className="flex items-center gap-2 rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:bg-red-900/20 dark:text-red-300">
+              ⚠️ Votre réclamation a été identifiée comme urgente et sera traitée en priorité.
+            </div>
+          )}
           <button type="submit" className="w-full rounded-full bg-gradient-to-r from-orange-600 to-amber-600 px-6 py-3 text-sm font-semibold text-white">{t('parentSpace.complaint.send')}</button>
         </form>
         {confirmation && (
@@ -93,9 +105,14 @@ function BabysitterComplaintPage() {
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{complaint.message}</p>
                   <p className="mt-2 text-xs text-slate-400">{complaint.date}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${complaint.status === 'Traité' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'}`}>
-                  {statusLabel(complaint.status)}
-                </span>
+                <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${complaint.status === 'Traité' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'}`}>
+                    {statusLabel(complaint.status)}
+                  </span>
+                  {complaint.priority === 'Urgente' && (
+                    <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">Urgente</span>
+                  )}
+                </div>
               </div>
               {(complaint.messages || []).filter((msg) => msg.author === 'Support').map((msg, index) => (
                 <p key={index} className="mt-3 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">{t('parentSpace.complaint.supportReply')} : {msg.text}</p>
