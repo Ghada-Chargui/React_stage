@@ -288,6 +288,34 @@ export const deleteUserAccount = (email) => {
   }
 };
 
+const MESSAGES_STORAGE_KEY = 'confiSitMessages';
+
+export const getMessagesForReservation = (reservationId) => {
+  if (!reservationId) return [];
+  const all = parseJson(MESSAGES_STORAGE_KEY, {});
+  return Array.isArray(all[reservationId]) ? all[reservationId] : [];
+};
+
+export const sendMessage = (reservationId, { author, role, text }) => {
+  if (!reservationId || !text?.trim()) return [];
+  const all = parseJson(MESSAGES_STORAGE_KEY, {});
+  const thread = Array.isArray(all[reservationId]) ? all[reservationId] : [];
+
+  const now = new Date();
+  const nextMessage = {
+    author,
+    role,
+    text: text.trim(),
+    date: now.toISOString().slice(0, 10),
+    time: now.toTimeString().slice(0, 5),
+  };
+
+  all[reservationId] = [...thread, nextMessage];
+  localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(all));
+  emitStorageChange();
+  return all[reservationId];
+};
+
 export const toggleUserVerification = (email) => {
   if (!email) return null;
   const users = getStoredUsers();

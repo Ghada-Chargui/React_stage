@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { List, CalendarDays } from 'lucide-react';
+import { List, CalendarDays, MessageCircle } from 'lucide-react';
 import { getReservations, saveReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 import ReservationCalendar from '../../components/ReservationCalendar';
+import ReservationChat from '../../components/ReservationChat';
 
 function BabysitterRequestsPage() {
   const { t } = useTranslation();
@@ -13,6 +14,7 @@ function BabysitterRequestsPage() {
 
   const [allReservations, setAllReservations] = useState(() => getReservations());
   const [view, setView] = useState('list');
+  const [openChatId, setOpenChatId] = useState(null);
 
   useEffect(() => {
     const syncReservations = () => setAllReservations(getReservations());
@@ -59,6 +61,20 @@ function BabysitterRequestsPage() {
           <button type="button" onClick={() => updateStatus(request.id, 'confirmée')} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">{t('babysitterSpace.requests.accept')}</button>
           <button type="button" onClick={() => updateStatus(request.id, 'refusée')} className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white">{t('babysitterSpace.requests.decline')}</button>
         </div>
+      )}
+      <button
+        type="button"
+        onClick={() => setOpenChatId((current) => (current === request.id ? null : request.id))}
+        className="mt-3 flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+      >
+        <MessageCircle size={14} /> {openChatId === request.id ? 'Fermer la discussion' : 'Discuter'}
+      </button>
+      {openChatId === request.id && (
+        <ReservationChat
+          reservationId={request.id}
+          currentUser={currentUser}
+          otherPartyName={request.parentName}
+        />
       )}
     </div>
   );

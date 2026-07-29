@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download, List, CalendarDays } from 'lucide-react';
+import { Download, List, CalendarDays, MessageCircle } from 'lucide-react';
 import { getBabysitterProfiles, addBabysitterReview, getReservations, saveReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 import { generateReservationReceipt } from '../../utils/generateReceipt';
 import ReservationCalendar from '../../components/ReservationCalendar';
+import ReservationChat from '../../components/ReservationChat';
 
 function ParentReservationsPage() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ function ParentReservationsPage() {
   const [form, setForm] = useState({ sitterId: '', date: '', hour: '', duration: '3', address: '', paymentMethod: 'sur_place' });
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [view, setView] = useState('list');
+  const [openChatId, setOpenChatId] = useState(null);
 
   useEffect(() => {
     const syncData = () => {
@@ -168,6 +170,20 @@ function ParentReservationsPage() {
         >
           <Download size={14} /> Télécharger le reçu (PDF)
         </button>
+      )}
+      <button
+        type="button"
+        onClick={() => setOpenChatId((current) => (current === reservation.id ? null : reservation.id))}
+        className="mt-3 ml-2 flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+      >
+        <MessageCircle size={14} /> {openChatId === reservation.id ? 'Fermer la discussion' : 'Discuter'}
+      </button>
+      {openChatId === reservation.id && (
+        <ReservationChat
+          reservationId={reservation.id}
+          currentUser={currentUser}
+          otherPartyName={reservation.sitterName}
+        />
       )}
     </div>
   );
