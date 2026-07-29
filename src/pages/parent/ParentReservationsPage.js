@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Download } from 'lucide-react';
+import { Download, List, CalendarDays } from 'lucide-react';
 import { getBabysitterProfiles, addBabysitterReview, getReservations, saveReservations, STORAGE_CHANGE_EVENT_NAME } from '../../utils/storage';
 import { generateReservationReceipt } from '../../utils/generateReceipt';
+import ReservationCalendar from '../../components/ReservationCalendar';
 
 function ParentReservationsPage() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ function ParentReservationsPage() {
   const [sitters, setSitters] = useState(() => getBabysitterProfiles());
   const [form, setForm] = useState({ sitterId: '', date: '', hour: '', duration: '3', address: '', paymentMethod: 'sur_place' });
   const [reviewDrafts, setReviewDrafts] = useState({});
+  const [view, setView] = useState('list');
 
   useEffect(() => {
     const syncData = () => {
@@ -109,76 +111,109 @@ function ParentReservationsPage() {
 
   const statusLabel = (status) => t(`parentSpace.reservations.status.${status}`, status);
 
+  const renderReservationCard = (reservation) => (
+    <div key={reservation.id} className="rounded-3xl border border-slate-200 p-4 dark:border-slate-700">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-extrabold text-slate-900 dark:text-slate-100">{reservation.sitterName}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{reservation.date} • {reservation.hour} • {reservation.duration}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{reservation.address}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{reservation.paymentMethod === 'carte' ? t('parentSpace.reservations.paymentCard') : t('parentSpace.reservations.paymentOnSite')}</p>
+        </div>
+        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${statusBadgeClass(reservation.status)}`}>{statusLabel(reservation.status)}</span>
+      </div>
+      {reservation.status === 'en attente' && (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('parentSpace.reservations.waitingConfirmation')}</p>
+          <button type="button" onClick={() => cancelReservation(reservation.id)} className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600/40 dark:hover:bg-red-900/20">{t('parentSpace.reservations.cancel')}</button>
+        </div>
+      )}
+      {reservation.status === 'confirmée' && (
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button type="button" onClick={() => completeReservation(reservation.id)} className="rounded-full border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-600/40 dark:hover:bg-emerald-900/20">{t('parentSpace.reservations.markComplete')}</button>
+          <button type="button" onClick={() => cancelReservation(reservation.id)} className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600/40 dark:hover:bg-red-900/20">{t('parentSpace.reservations.cancel')}</button>
+        </div>
+      )}
+      {reservation.status === 'refusée' && (
+        <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{t('parentSpace.reservations.refused')}</p>
+      )}
+      {reservation.status === 'terminée' && !reservation.review && (
+        <div className="mt-4 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('parentSpace.reservations.leaveReview', { name: reservation.sitterName })}</p>
+          <div className="mt-2 flex gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button key={star} type="button" onClick={() => updateReviewDraft(reservation.id, 'stars', star)} className={`text-xl ${(reviewDrafts[reservation.id]?.stars || 5) >= star ? 'text-amber-500' : 'text-slate-300 dark:text-slate-600'}`}>★</button>
+            ))}
+          </div>
+          <textarea
+            value={reviewDrafts[reservation.id]?.comment || ''}
+            onChange={(event) => updateReviewDraft(reservation.id, 'comment', event.target.value)}
+            rows="2"
+            placeholder={t('parentSpace.reservations.reviewPlaceholder')}
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+          />
+          <button type="button" onClick={() => submitReview(reservation)} className="mt-2 rounded-full bg-gradient-to-r from-orange-600 to-amber-600 px-5 py-2 text-sm font-semibold text-white">{t('parentSpace.reservations.sendReview')}</button>
+        </div>
+      )}
+      {reservation.review && (
+        <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {t('parentSpace.reservations.yourReview')} : ★ {reservation.review.stars} — {reservation.review.comment}
+        </div>
+      )}
+      {reservation.status === 'terminée' && (
+        <button
+          type="button"
+          onClick={() => handleDownloadReceipt(reservation)}
+          className="mt-3 flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-600/40 dark:text-amber-300 dark:hover:bg-amber-900/20"
+        >
+          <Download size={14} /> Télécharger le reçu (PDF)
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
       <div className="space-y-6">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">{t('parentSpace.reservations.tag')}</p>
-          <h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t('parentSpace.reservations.title')}</h2>
-          <div className="mt-6 space-y-4">
-            {reservations.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">{t('parentSpace.reservations.empty')}</p>
-            ) : reservations.map((reservation) => (
-              <div key={reservation.id} className="rounded-3xl border border-slate-200 p-4 dark:border-slate-700">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-extrabold text-slate-900 dark:text-slate-100">{reservation.sitterName}</p>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{reservation.date} • {reservation.hour} • {reservation.duration}</p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{reservation.address}</p>
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{reservation.paymentMethod === 'carte' ? t('parentSpace.reservations.paymentCard') : t('parentSpace.reservations.paymentOnSite')}</p>
-                  </div>
-                  <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] ${statusBadgeClass(reservation.status)}`}>{statusLabel(reservation.status)}</span>
-                </div>
-                {reservation.status === 'en attente' && (
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('parentSpace.reservations.waitingConfirmation')}</p>
-                    <button type="button" onClick={() => cancelReservation(reservation.id)} className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600/40 dark:hover:bg-red-900/20">{t('parentSpace.reservations.cancel')}</button>
-                  </div>
-                )}
-                {reservation.status === 'confirmée' && (
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button type="button" onClick={() => completeReservation(reservation.id)} className="rounded-full border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-600/40 dark:hover:bg-emerald-900/20">{t('parentSpace.reservations.markComplete')}</button>
-                    <button type="button" onClick={() => cancelReservation(reservation.id)} className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:border-red-600/40 dark:hover:bg-red-900/20">{t('parentSpace.reservations.cancel')}</button>
-                  </div>
-                )}
-                {reservation.status === 'refusée' && (
-                  <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{t('parentSpace.reservations.refused')}</p>
-                )}
-                {reservation.status === 'terminée' && !reservation.review && (
-                  <div className="mt-4 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
-                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('parentSpace.reservations.leaveReview', { name: reservation.sitterName })}</p>
-                    <div className="mt-2 flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button key={star} type="button" onClick={() => updateReviewDraft(reservation.id, 'stars', star)} className={`text-xl ${(reviewDrafts[reservation.id]?.stars || 5) >= star ? 'text-amber-500' : 'text-slate-300 dark:text-slate-600'}`}>★</button>
-                      ))}
-                    </div>
-                    <textarea
-                      value={reviewDrafts[reservation.id]?.comment || ''}
-                      onChange={(event) => updateReviewDraft(reservation.id, 'comment', event.target.value)}
-                      rows="2"
-                      placeholder={t('parentSpace.reservations.reviewPlaceholder')}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900"
-                    />
-                    <button type="button" onClick={() => submitReview(reservation)} className="mt-2 rounded-full bg-gradient-to-r from-orange-600 to-amber-600 px-5 py-2 text-sm font-semibold text-white">{t('parentSpace.reservations.sendReview')}</button>
-                  </div>
-                )}
-                {reservation.review && (
-                  <div className="mt-4 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    {t('parentSpace.reservations.yourReview')} : ★ {reservation.review.stars} — {reservation.review.comment}
-                  </div>
-                )}
-                {reservation.status === 'terminée' && (
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadReceipt(reservation)}
-                    className="mt-3 flex items-center gap-2 rounded-full border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 dark:border-amber-600/40 dark:text-amber-300 dark:hover:bg-amber-900/20"
-                  >
-                    <Download size={14} /> Télécharger le reçu (PDF)
-                  </button>
-                )}
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">{t('parentSpace.reservations.tag')}</p>
+              <h2 className="mt-3 text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t('parentSpace.reservations.title')}</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setView('list')}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${view === 'list' ? 'bg-orange-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}
+              >
+                <List size={16} /> Liste
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('calendar')}
+                className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${view === 'calendar' ? 'bg-orange-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}
+              >
+                <CalendarDays size={16} /> Calendrier
+              </button>
+            </div>
           </div>
+
+          {view === 'list' ? (
+            <div className="mt-6 space-y-4">
+              {reservations.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t('parentSpace.reservations.empty')}</p>
+              ) : reservations.map((reservation) => renderReservationCard(reservation))}
+            </div>
+          ) : (
+            <div className="mt-6">
+              <ReservationCalendar
+                reservations={reservations}
+                renderReservation={renderReservationCard}
+                nameField="sitterName"
+              />
+            </div>
+          )}
         </div>
       </div>
 
