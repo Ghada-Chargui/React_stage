@@ -1,24 +1,61 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, LayoutGrid, PieChart, ShieldAlert, Users, MessageSquareWarning, LogOut, Wallet, BadgeCheck, Activity, UserPlus, CalendarPlus, Clock, TrendingUp } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, Legend } from 'recharts';
+import axios from 'axios';
+import {
+  BarChart3,
+  LayoutGrid,
+  PieChart,
+  ShieldAlert,
+  Users,
+  MessageSquareWarning,
+  LogOut,
+  Wallet,
+  BadgeCheck,
+  Activity,
+  UserPlus,
+  CalendarPlus,
+  Clock,
+  TrendingUp,
+} from 'lucide-react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
+
 import StatCard from '../components/StatCard';
 import ChartWidget from '../components/ChartWidget';
 import UserTable from '../components/UserTable';
 import UserDetailCard from '../components/UserDetailCard';
 import ConfirmModal from '../components/ConfirmModal';
 import ComplaintCard from '../components/ComplaintCard';
-import { getAdminComplaints, saveAdminComplaints, initializeAdminDemoData } from '../data/adminMockData';
 import { detectComplaintPriority } from '../utils/complaintPriority';
-import { getRegisteredUsers, saveRegisteredUsers, getReservations, toggleUserVerification } from '../utils/storage';
+import {
+  getRegisteredUsers,
+  saveRegisteredUsers,
+  getReservations,
+  toggleUserVerification,
+} from '../utils/storage';
 
 const COLORS = ['#f59e0b', '#3b82f6', '#14b8a6', '#a855f7'];
+
 const ROLE_COLORS = {
   Parents: '#f59e0b',
   Babysitters: '#3b82f6',
   Admin: '#14b8a6',
 };
+
 const COMPLAINT_COLORS = {
   'En attente': '#f59e0b',
   Traité: '#10b981',
@@ -28,19 +65,25 @@ function AdminPage() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [reservations, setReservations] = useState([]);
+
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+
   const [editingUser, setEditingUser] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [zoneFilter, setZoneFilter] = useState('');
   const [minRatingFilter, setMinRatingFilter] = useState('0');
   const [accountStatusFilter, setAccountStatusFilter] = useState('all');
+
   const [period, setPeriod] = useState('30');
+
   const [complaintFilter, setComplaintFilter] = useState('all');
   const [draftStatus, setDraftStatus] = useState('En attente');
   const [draftPriority, setDraftPriority] = useState('Normale');
@@ -48,664 +91,3018 @@ function AdminPage() {
 
   const relativeDate = (dateStr) => {
     if (!dateStr) return '';
-    const diffDays = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(dateStr).setHours(0, 0, 0, 0)) / 86400000);
-    if (diffDays <= 0) return t('adminSpace.dashboard.activity.today');
-    if (diffDays === 1) return t('adminSpace.dashboard.activity.yesterday');
-    return t('adminSpace.dashboard.activity.daysAgo', { count: diffDays });
+
+    const diffDays = Math.round(
+      (
+        new Date().setHours(0, 0, 0, 0) -
+        new Date(dateStr).setHours(0, 0, 0, 0)
+      ) / 86400000
+    );
+
+    if (diffDays <= 0) {
+      return t('adminSpace.dashboard.activity.today');
+    }
+
+    if (diffDays === 1) {
+      return t('adminSpace.dashboard.activity.yesterday');
+    }
+
+    return t('adminSpace.dashboard.activity.daysAgo', {
+      count: diffDays,
+    });
   };
 
+  /*
+   * ============================================================
+   * CHARGEMENT DES RÉCLAMATIONS DEPUIS LE BACKEND
+   * ============================================================
+   */
+
+  const loadComplaints = async () => {
+    try {
+      const response = await axios.get(
+        'http://localhost:8082/api/admin/reclamations'
+      );
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+      const formattedComplaints = data.map((item) => {
+        const userName = item.user
+          ? `${item.user.prenom || ''} ${item.user.nom || ''}`.trim()
+          : 'Utilisateur';
+
+        return {
+          id: item.id,
+
+          // ID de l'utilisateur qui a envoyé la réclamation
+          userId: item.user?.id,
+
+          // Informations utilisateur
+          userName,
+          userEmail: item.user?.email || '',
+
+          // Informations de la réclamation
+          subject: item.sujet || '',
+          message: item.description || '',
+          date: item.dateCreation || '',
+
+          // Statut backend
+          status: item.statut || 'En attente',
+
+          // Urgence backend
+          priority: item.urgence
+            ? 'Urgente'
+            : 'Normale',
+
+          // Fil de discussion initial
+          messages: [
+            {
+              author: userName,
+              text: item.description || '',
+              date: item.dateCreation || '',
+            },
+          ],
+
+          resolvedAt: null,
+        };
+      });
+
+      setComplaints(formattedComplaints);
+
+      setSelectedComplaint((current) => {
+        if (!current) {
+          return formattedComplaints[0] || null;
+        }
+
+        return (
+          formattedComplaints.find(
+            (item) => item.id === current.id
+          ) ||
+          formattedComplaints[0] ||
+          null
+        );
+      });
+    } catch (error) {
+      console.error(
+        'Erreur lors du chargement des réclamations :',
+        error
+      );
+    }
+  };
+
+  /*
+   * ============================================================
+   * CHARGEMENT DES DONNÉES
+   * ============================================================
+   */
+
   useEffect(() => {
-    initializeAdminDemoData();
     const syncData = () => {
       const storedUsers = getRegisteredUsers();
-      const storedComplaints = getAdminComplaints();
       const storedReservations = getReservations();
+
       setUsers(storedUsers);
-      setComplaints(storedComplaints);
       setReservations(storedReservations);
-      setSelectedUser((current) => current || storedUsers[0] || null);
-      setSelectedComplaint((current) => current || storedComplaints[0] || null);
+
+      setSelectedUser(
+        (current) =>
+          current ||
+          storedUsers[0] ||
+          null
+      );
+
+      // Les réclamations viennent maintenant du BACKEND
+      loadComplaints();
     };
 
     syncData();
-    window.addEventListener('storage', syncData);
-    window.addEventListener('confiSitDataChanged', syncData);
+
+    window.addEventListener(
+      'storage',
+      syncData
+    );
+
+    window.addEventListener(
+      'confiSitDataChanged',
+      syncData
+    );
+
     return () => {
-      window.removeEventListener('storage', syncData);
-      window.removeEventListener('confiSitDataChanged', syncData);
+      window.removeEventListener(
+        'storage',
+        syncData
+      );
+
+      window.removeEventListener(
+        'confiSitDataChanged',
+        syncData
+      );
     };
   }, []);
 
+  /*
+   * ============================================================
+   * PROFIL CIBLÉ
+   * ============================================================
+   */
+
   useEffect(() => {
-    if (location.pathname === '/espace-admin/profils' && location.state?.focusEmail && users.length) {
-      const match = users.find((user) => user.email === location.state.focusEmail);
-      if (match) setSelectedUser(match);
+    if (
+      location.pathname === '/espace-admin/profils' &&
+      location.state?.focusEmail &&
+      users.length
+    ) {
+      const match = users.find(
+        (user) =>
+          user.email === location.state.focusEmail
+      );
+
+      if (match) {
+        setSelectedUser(match);
+      }
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, users]);
 
+  /*
+   * ============================================================
+   * UTILISATEUR ADMIN CONNECTÉ
+   * ============================================================
+   */
+
   const currentUser = useMemo(() => {
-    const storedUser = localStorage.getItem('confiSitUser');
-    if (!storedUser) return null;
-    return JSON.parse(storedUser);
+    const storedUser =
+      localStorage.getItem('confiSitUser');
+
+    if (!storedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      return null;
+    }
   }, []);
+
+  /*
+   * ============================================================
+   * FILTRE UTILISATEURS
+   * ============================================================
+   */
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-      const haystack = `${user.name} ${user.email}`.toLowerCase();
-      const matchesSearch = haystack.includes(searchTerm.toLowerCase());
-      const matchesZone = !zoneFilter || (user.zone || user.address || '').toLowerCase().includes(zoneFilter.toLowerCase());
-      const matchesRating = Number(user.rating || 0) >= Number(minRatingFilter);
-      const matchesStatus = accountStatusFilter === 'all' || user.status === accountStatusFilter;
-      return matchesRole && matchesSearch && matchesZone && matchesRating && matchesStatus;
+      const matchesRole =
+        roleFilter === 'all' ||
+        user.role === roleFilter;
+
+      const haystack =
+        `${user.name || ''} ${user.email || ''}`.toLowerCase();
+
+      const matchesSearch =
+        haystack.includes(
+          searchTerm.toLowerCase()
+        );
+
+      const matchesZone =
+        !zoneFilter ||
+        (
+          user.zone ||
+          user.address ||
+          ''
+        )
+          .toLowerCase()
+          .includes(
+            zoneFilter.toLowerCase()
+          );
+
+      const matchesRating =
+        Number(user.rating || 0) >=
+        Number(minRatingFilter);
+
+      const matchesStatus =
+        accountStatusFilter === 'all' ||
+        user.status === accountStatusFilter;
+
+      return (
+        matchesRole &&
+        matchesSearch &&
+        matchesZone &&
+        matchesRating &&
+        matchesStatus
+      );
     });
-  }, [users, roleFilter, searchTerm, zoneFilter, minRatingFilter, accountStatusFilter]);
+  }, [
+    users,
+    roleFilter,
+    searchTerm,
+    zoneFilter,
+    minRatingFilter,
+    accountStatusFilter,
+  ]);
+
+  /*
+   * ============================================================
+   * FILTRE RÉCLAMATIONS
+   * ============================================================
+   */
 
   const filteredComplaints = useMemo(() => {
-    return complaints.filter((complaint) => complaintFilter === 'all' || complaint.status === complaintFilter);
-  }, [complaints, complaintFilter]);
+    return complaints.filter(
+      (complaint) =>
+        complaintFilter === 'all' ||
+        complaint.status === complaintFilter
+    );
+  }, [
+    complaints,
+    complaintFilter,
+  ]);
 
-  const babysitters = useMemo(() => users.filter((user) => user.role === 'babysitter'), [users]);
+  /*
+   * ============================================================
+   * BABYSITTERS
+   * ============================================================
+   */
+
+  const babysitters = useMemo(
+    () =>
+      users.filter(
+        (user) =>
+          user.role === 'babysitter'
+      ),
+    [users]
+  );
 
   const topBabysitters = useMemo(() => {
     return babysitters
       .map((sitter) => ({
         ...sitter,
-        reservationCount: reservations.filter((item) => item.sitterEmail === sitter.email).length,
+
+        reservationCount:
+          reservations.filter(
+            (item) =>
+              item.sitterEmail ===
+              sitter.email
+          ).length,
       }))
-      .sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0) || b.reservationCount - a.reservationCount)
+      .sort(
+        (a, b) =>
+          (Number(b.rating) || 0) -
+            (Number(a.rating) || 0) ||
+          b.reservationCount -
+            a.reservationCount
+      )
       .slice(0, 5);
-  }, [babysitters, reservations]);
+  }, [
+    babysitters,
+    reservations,
+  ]);
+
+  /*
+   * ============================================================
+   * STATISTIQUES ACCEPTATION
+   * ============================================================
+   */
 
   const acceptanceStats = useMemo(() => {
     return babysitters
       .map((sitter) => {
-        const answered = reservations.filter((item) => item.sitterEmail === sitter.email && ['confirmée', 'refusée', 'terminée'].includes(item.status));
-        const accepted = answered.filter((item) => item.status !== 'refusée').length;
-        const rate = answered.length ? Math.round((accepted / answered.length) * 100) : null;
-        return { ...sitter, answered: answered.length, accepted, rate };
+        const answered =
+          reservations.filter(
+            (item) =>
+              item.sitterEmail ===
+                sitter.email &&
+              [
+                'confirmée',
+                'refusée',
+                'terminée',
+              ].includes(item.status)
+          );
+
+        const accepted =
+          answered.filter(
+            (item) =>
+              item.status !==
+              'refusée'
+          ).length;
+
+        const rate = answered.length
+          ? Math.round(
+              (accepted /
+                answered.length) *
+                100
+            )
+          : null;
+
+        return {
+          ...sitter,
+          answered:
+            answered.length,
+          accepted,
+          rate,
+        };
       })
-      .filter((sitter) => sitter.answered > 0)
-      .sort((a, b) => (b.rate || 0) - (a.rate || 0));
-  }, [babysitters, reservations]);
+      .filter(
+        (sitter) =>
+          sitter.answered > 0
+      )
+      .sort(
+        (a, b) =>
+          (b.rate || 0) -
+          (a.rate || 0)
+      );
+  }, [
+    babysitters,
+    reservations,
+  ]);
+
+  /*
+   * ============================================================
+   * REVENUS
+   * ============================================================
+   */
 
   const simulatedRevenue = useMemo(() => {
     return reservations
-      .filter((item) => item.status === 'terminée')
-      .reduce((sum, item) => {
-        const sitter = users.find((user) => user.email === item.sitterEmail);
-        const rate = Number(sitter?.hourlyRate) || 35;
-        const hours = parseInt(item.duration, 10) || 1;
-        return sum + rate * hours * 0.1;
-      }, 0);
-  }, [reservations, users]);
+      .filter(
+        (item) =>
+          item.status ===
+          'terminée'
+      )
+      .reduce(
+        (sum, item) => {
+          const sitter =
+            users.find(
+              (user) =>
+                user.email ===
+                item.sitterEmail
+            );
 
-  const pendingVerificationCount = useMemo(() => babysitters.filter((sitter) => !sitter.verified).length, [babysitters]);
+          const rate =
+            Number(
+              sitter?.hourlyRate
+            ) || 35;
 
-  const complaintResponseTime = useMemo(() => {
-    const resolved = complaints.filter((item) => item.resolvedAt && item.date);
-    if (!resolved.length) return null;
-    const totalDays = resolved.reduce((sum, item) => sum + Math.max(0, (new Date(item.resolvedAt) - new Date(item.date)) / 86400000), 0);
-    return (totalDays / resolved.length).toFixed(1);
-  }, [complaints]);
+          const hours =
+            parseInt(
+              item.duration,
+              10
+            ) || 1;
+
+          return (
+            sum +
+            rate *
+              hours *
+              0.1
+          );
+        },
+        0
+      );
+  }, [
+    reservations,
+    users,
+  ]);
+
+  /*
+   * ============================================================
+   * VÉRIFICATION BABYSITTERS
+   * ============================================================
+   */
+
+  const pendingVerificationCount =
+    useMemo(
+      () =>
+        babysitters.filter(
+          (sitter) =>
+            !sitter.verified
+        ).length,
+      [babysitters]
+    );
+
+  /*
+   * ============================================================
+   * TEMPS DE TRAITEMENT DES RÉCLAMATIONS
+   * ============================================================
+   */
+
+  const complaintResponseTime =
+    useMemo(() => {
+      const resolved =
+        complaints.filter(
+          (item) =>
+            item.resolvedAt &&
+            item.date
+        );
+
+      if (!resolved.length) {
+        return null;
+      }
+
+      const totalDays =
+        resolved.reduce(
+          (sum, item) =>
+            sum +
+            Math.max(
+              0,
+              (
+                new Date(
+                  item.resolvedAt
+                ) -
+                new Date(
+                  item.date
+                )
+              ) /
+                86400000
+            ),
+          0
+        );
+
+      return (
+        totalDays /
+        resolved.length
+      ).toFixed(1);
+    }, [complaints]);
+
+  /*
+   * ============================================================
+   * ACTIVITÉ RÉCENTE
+   * ============================================================
+   */
 
   const recentActivity = useMemo(() => {
     const items = [
       ...users.map((user) => ({
         type: 'inscription',
-        label: t('adminSpace.dashboard.activity.registered', { name: user.name, role: t(`adminSpace.roles.${user.role}`, user.role) }),
-        date: user.registeredAt,
+
+        label: t(
+          'adminSpace.dashboard.activity.registered',
+          {
+            name: user.name,
+            role: t(
+              `adminSpace.roles.${user.role}`,
+              user.role
+            ),
+          }
+        ),
+
+        date:
+          user.registeredAt,
+
         icon: UserPlus,
       })),
-      ...complaints.map((item) => ({
-        type: 'reclamation',
-        label: t('adminSpace.dashboard.activity.complaintReceived', { subject: item.subject, name: item.userName }),
-        date: item.date,
-        icon: MessageSquareWarning,
-      })),
-      ...reservations.map((item) => ({
-        type: 'reservation',
-        label: t('adminSpace.dashboard.activity.reservationMade', {
-          parent: item.parentName || t('adminSpace.dashboard.activity.defaultParent'),
-          sitter: item.sitterName || t('adminSpace.dashboard.activity.defaultSitter'),
-        }),
-        date: item.date,
-        icon: CalendarPlus,
-      })),
+
+      ...complaints.map(
+        (item) => ({
+          type: 'reclamation',
+
+          label: t(
+            'adminSpace.dashboard.activity.complaintReceived',
+            {
+              subject:
+                item.subject,
+              name:
+                item.userName,
+            }
+          ),
+
+          date: item.date,
+
+          icon:
+            MessageSquareWarning,
+        })
+      ),
+
+      ...reservations.map(
+        (item) => ({
+          type: 'reservation',
+
+          label: t(
+            'adminSpace.dashboard.activity.reservationMade',
+            {
+              parent:
+                item.parentName ||
+                t(
+                  'adminSpace.dashboard.activity.defaultParent'
+                ),
+
+              sitter:
+                item.sitterName ||
+                t(
+                  'adminSpace.dashboard.activity.defaultSitter'
+                ),
+            }
+          ),
+
+          date: item.date,
+
+          icon:
+            CalendarPlus,
+        })
+      ),
     ];
+
     return items
-      .filter((item) => item.date)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .filter(
+        (item) => item.date
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.date) -
+          new Date(a.date)
+      )
       .slice(0, 6);
-  }, [users, complaints, reservations, t]);
+  }, [
+    users,
+    complaints,
+    reservations,
+    t,
+  ]);
+
+  /*
+   * ============================================================
+   * CARTES DASHBOARD
+   * ============================================================
+   */
 
   const summaryCards = [
-    { label: t('adminSpace.dashboard.cards.totalParents'), value: users.filter((user) => user.role === 'parent').length, icon: Users, detail: t('adminSpace.dashboard.cards.totalParentsDetail') },
-    { label: t('adminSpace.dashboard.cards.totalBabysitters'), value: users.filter((user) => user.role === 'babysitter').length, icon: ShieldAlert, detail: t('adminSpace.dashboard.cards.totalBabysittersDetail') },
-    { label: t('adminSpace.dashboard.cards.reservations'), value: reservations.length, icon: BarChart3, detail: t('adminSpace.dashboard.cards.reservationsDetail') },
-    { label: t('adminSpace.dashboard.cards.pendingComplaints'), value: complaints.filter((item) => item.status === 'En attente').length, icon: MessageSquareWarning, detail: t('adminSpace.dashboard.cards.pendingComplaintsDetail') },
-    { label: t('adminSpace.dashboard.cards.simulatedRevenue'), value: `${simulatedRevenue.toFixed(0)} TND`, icon: Wallet, detail: t('adminSpace.dashboard.cards.simulatedRevenueDetail') },
-    { label: t('adminSpace.dashboard.cards.toVerify'), value: pendingVerificationCount, icon: BadgeCheck, detail: t('adminSpace.dashboard.cards.toVerifyDetail') },
+    {
+      label: t(
+        'adminSpace.dashboard.cards.totalParents'
+      ),
+      value:
+        users.filter(
+          (user) =>
+            user.role === 'parent'
+        ).length,
+      icon: Users,
+      detail: t(
+        'adminSpace.dashboard.cards.totalParentsDetail'
+      ),
+    },
+
+    {
+      label: t(
+        'adminSpace.dashboard.cards.totalBabysitters'
+      ),
+      value:
+        users.filter(
+          (user) =>
+            user.role ===
+            'babysitter'
+        ).length,
+      icon: ShieldAlert,
+      detail: t(
+        'adminSpace.dashboard.cards.totalBabysittersDetail'
+      ),
+    },
+
+    {
+      label: t(
+        'adminSpace.dashboard.cards.reservations'
+      ),
+      value:
+        reservations.length,
+      icon: BarChart3,
+      detail: t(
+        'adminSpace.dashboard.cards.reservationsDetail'
+      ),
+    },
+
+    {
+      label: t(
+        'adminSpace.dashboard.cards.pendingComplaints'
+      ),
+      value:
+        complaints.filter(
+          (item) =>
+            item.status ===
+            'En attente'
+        ).length,
+      icon:
+        MessageSquareWarning,
+      detail: t(
+        'adminSpace.dashboard.cards.pendingComplaintsDetail'
+      ),
+    },
+
+    {
+      label: t(
+        'adminSpace.dashboard.cards.simulatedRevenue'
+      ),
+      value: `${simulatedRevenue.toFixed(
+        0
+      )} TND`,
+      icon: Wallet,
+      detail: t(
+        'adminSpace.dashboard.cards.simulatedRevenueDetail'
+      ),
+    },
+
+    {
+      label: t(
+        'adminSpace.dashboard.cards.toVerify'
+      ),
+      value:
+        pendingVerificationCount,
+      icon: BadgeCheck,
+      detail: t(
+        'adminSpace.dashboard.cards.toVerifyDetail'
+      ),
+    },
   ];
 
-  const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun'];
+  /*
+   * ============================================================
+   * DONNÉES GRAPHIQUES
+   * ============================================================
+   */
+
+  const monthKeys = [
+    'jan',
+    'feb',
+    'mar',
+    'apr',
+    'may',
+    'jun',
+  ];
 
   const insightData = useMemo(() => {
     const months = [
-      { month: t('adminSpace.months.jan'), parents: 4, sitters: 2, reservations: 5, complaints: 1 },
-      { month: t('adminSpace.months.feb'), parents: 5, sitters: 3, reservations: 7, complaints: 2 },
-      { month: t('adminSpace.months.mar'), parents: 7, sitters: 4, reservations: 8, complaints: 2 },
-      { month: t('adminSpace.months.apr'), parents: 8, sitters: 4, reservations: 9, complaints: 1 },
-      { month: t('adminSpace.months.may'), parents: 9, sitters: 5, reservations: 10, complaints: 2 },
-      { month: t('adminSpace.months.jun'), parents: 10, sitters: 6, reservations: 12, complaints: 2 },
+      {
+        month: t(
+          'adminSpace.months.jan'
+        ),
+        parents: 4,
+        sitters: 2,
+        reservations: 5,
+        complaints: 1,
+      },
+
+      {
+        month: t(
+          'adminSpace.months.feb'
+        ),
+        parents: 5,
+        sitters: 3,
+        reservations: 7,
+        complaints: 2,
+      },
+
+      {
+        month: t(
+          'adminSpace.months.mar'
+        ),
+        parents: 7,
+        sitters: 4,
+        reservations: 8,
+        complaints: 2,
+      },
+
+      {
+        month: t(
+          'adminSpace.months.apr'
+        ),
+        parents: 8,
+        sitters: 4,
+        reservations: 9,
+        complaints: 1,
+      },
+
+      {
+        month: t(
+          'adminSpace.months.may'
+        ),
+        parents: 9,
+        sitters: 5,
+        reservations: 10,
+        complaints: 2,
+      },
+
+      {
+        month: t(
+          'adminSpace.months.jun'
+        ),
+        parents: 10,
+        sitters: 6,
+        reservations: 12,
+        complaints: 2,
+      },
     ];
 
-    if (period === '7') return months.slice(-3);
-    if (period === '365') return months;
+    if (period === '7') {
+      return months.slice(-3);
+    }
+
+    if (period === '365') {
+      return months;
+    }
+
     return months.slice(-4);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period, t]);
-  // referencing monthKeys keeps intent explicit even though unused directly
+
   void monthKeys;
 
+  /*
+   * ============================================================
+   * RÉPARTITION RÔLES
+   * ============================================================
+   */
+
   const roleDistribution = [
-    { name: 'Parents', value: users.filter((user) => user.role === 'parent').length },
-    { name: 'Babysitters', value: users.filter((user) => user.role === 'babysitter').length },
-    { name: 'Admin', value: users.filter((user) => user.role === 'admin').length },
+    {
+      name: 'Parents',
+      value:
+        users.filter(
+          (user) =>
+            user.role === 'parent'
+        ).length,
+    },
+
+    {
+      name: 'Babysitters',
+      value:
+        users.filter(
+          (user) =>
+            user.role ===
+            'babysitter'
+        ).length,
+    },
+
+    {
+      name: 'Admin',
+      value:
+        users.filter(
+          (user) =>
+            user.role === 'admin'
+        ).length,
+    },
   ];
+
+  /*
+   * ============================================================
+   * RÉPARTITION RÉCLAMATIONS
+   * ============================================================
+   */
 
   const complaintDistribution = [
-    { name: 'En attente', value: complaints.filter((item) => item.status === 'En attente').length },
-    { name: 'Traité', value: complaints.filter((item) => item.status === 'Traité').length },
+    {
+      name: 'En attente',
+      value:
+        complaints.filter(
+          (item) =>
+            item.status ===
+            'En attente'
+        ).length,
+    },
+
+    {
+      name: 'Traité',
+      value:
+        complaints.filter(
+          (item) =>
+            item.status ===
+            'Traité'
+        ).length,
+    },
   ];
 
-  const handleSaveUser = (event) => {
+  /*
+   * ============================================================
+   * MODIFICATION UTILISATEUR
+   * ============================================================
+   */
+
+  const handleSaveUser = (
+    event
+  ) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+
+    const formData =
+      new FormData(
+        event.currentTarget
+      );
+
     const nextUser = {
       ...editingUser,
-      name: formData.get('name'),
-      email: formData.get('email'),
-      role: formData.get('role'),
-      status: formData.get('status'),
-      phone: formData.get('phone'),
-      address: formData.get('address'),
-      notes: formData.get('notes') || '',
-      hourlyRate: formData.get('hourlyRate') || editingUser.hourlyRate,
-      experience: formData.get('experience') || editingUser.experience,
-      zone: formData.get('zone') || editingUser.zone,
-      availability: formData.get('availability')?.split(',').map((item) => item.trim()).filter(Boolean) || editingUser.availability,
-      childrenCount: formData.get('childrenCount') || editingUser.childrenCount,
-      bio: formData.get('bio') || editingUser.bio,
+
+      name:
+        formData.get('name'),
+
+      email:
+        formData.get('email'),
+
+      role:
+        formData.get('role'),
+
+      status:
+        formData.get('status'),
+
+      phone:
+        formData.get('phone'),
+
+      address:
+        formData.get('address'),
+
+      notes:
+        formData.get('notes') ||
+        '',
+
+      hourlyRate:
+        formData.get(
+          'hourlyRate'
+        ) ||
+        editingUser.hourlyRate,
+
+      experience:
+        formData.get(
+          'experience'
+        ) ||
+        editingUser.experience,
+
+      zone:
+        formData.get('zone') ||
+        editingUser.zone,
+
+      availability:
+        formData
+          .get('availability')
+          ?.split(',')
+          .map(
+            (item) =>
+              item.trim()
+          )
+          .filter(Boolean) ||
+        editingUser.availability,
+
+      childrenCount:
+        formData.get(
+          'childrenCount'
+        ) ||
+        editingUser.childrenCount,
+
+      bio:
+        formData.get('bio') ||
+        editingUser.bio,
     };
 
-    const updatedUsers = users.map((user) => (user.id === nextUser.id ? nextUser : user));
-    setUsers(updatedUsers);
-    saveRegisteredUsers(updatedUsers);
+    const updatedUsers =
+      users.map((user) =>
+        user.id === nextUser.id
+          ? nextUser
+          : user
+      );
+
+    setUsers(
+      updatedUsers
+    );
+
+    saveRegisteredUsers(
+      updatedUsers
+    );
+
     setEditingUser(null);
-    setSelectedUser(nextUser);
+    setSelectedUser(
+      nextUser
+    );
   };
 
-  const handleDeleteUser = () => {
-    const remaining = users.filter((user) => user.id !== selectedUser.id);
-    setUsers(remaining);
-    saveRegisteredUsers(remaining);
-    setSelectedUser(remaining[0] || null);
-    setEditingUser(null);
-    setIsConfirmOpen(false);
-  };
+  /*
+   * ============================================================
+   * SUPPRESSION UTILISATEUR
+   * ============================================================
+   */
 
-  const handleToggleVerify = (user) => {
-    const updated = toggleUserVerification(user.email);
-    if (!updated) return;
-    const nextUsers = users.map((item) => (item.email === user.email ? updated : item));
-    setUsers(nextUsers);
-    setSelectedUser(updated);
-  };
+  const handleDeleteUser =
+    () => {
+      if (!selectedUser)
+        return;
 
-  const handleSaveComplaint = (event) => {
-    event.preventDefault();
-    const today = new Date().toISOString().slice(0, 10);
-    const nextMessages = replyText.trim()
-      ? [...(selectedComplaint.messages || []), { author: 'Support', text: replyText.trim(), date: today }]
-      : (selectedComplaint.messages || []);
+      const remaining =
+        users.filter(
+          (user) =>
+            user.id !==
+            selectedUser.id
+        );
 
-    const nextComplaints = complaints.map((item) => {
-      if (item.id !== selectedComplaint.id) return item;
-      return {
-        ...item,
-        status: draftStatus,
-        priority: draftPriority,
-        messages: nextMessages,
-        resolvedAt: draftStatus === 'Traité' ? (item.resolvedAt || today) : (draftStatus === 'En attente' ? null : item.resolvedAt),
-      };
-    });
-    setComplaints(nextComplaints);
-    saveAdminComplaints(nextComplaints);
-    setSelectedComplaint(nextComplaints.find((item) => item.id === selectedComplaint.id));
-    setReplyText('');
-  };
+      setUsers(
+        remaining
+      );
 
-  const handleLogout = () => {
-    localStorage.removeItem('confiSitUser');
-    navigate('/connexion');
-  };
+      saveRegisteredUsers(
+        remaining
+      );
 
-  const handleSelectUser = (user) => {
-    setSelectedUser(user);
-    setEditingUser(null);
-  };
+      setSelectedUser(
+        remaining[0] ||
+          null
+      );
 
-  const handleSelectComplaint = (complaint) => {
-    setSelectedComplaint(complaint);
-    setDraftStatus(complaint.status);
-    setDraftPriority(complaint.priority || 'Normale');
-    setReplyText('');
-  };
+      setEditingUser(null);
+      setIsConfirmOpen(
+        false
+      );
+    };
 
-  const handleViewComplaintProfile = () => {
-    const matchedUser = users.find((user) => user.name === selectedComplaint?.userName);
-    if (matchedUser) {
-      navigate('/espace-admin/profils', { state: { focusEmail: matchedUser.email } });
-    }
-  };
+  /*
+   * ============================================================
+   * VÉRIFICATION UTILISATEUR
+   * ============================================================
+   */
 
-  const complaintStatusLabel = (status) => (status === 'Traité' ? t('parentSpace.complaint.status.done') : t('parentSpace.complaint.status.pending'));
+  const handleToggleVerify =
+    (user) => {
+      const updated =
+        toggleUserVerification(
+          user.email
+        );
+
+      if (!updated)
+        return;
+
+      const nextUsers =
+        users.map((item) =>
+          item.email ===
+          user.email
+            ? updated
+            : item
+        );
+
+      setUsers(
+        nextUsers
+      );
+
+      setSelectedUser(
+        updated
+      );
+    };
+
+  /*
+   * ============================================================
+   * TRAITEMENT RÉCLAMATION
+   * ============================================================
+   */
+
+  const handleSaveComplaint =
+    async (event) => {
+      event.preventDefault();
+
+      if (
+        !selectedComplaint?.id
+      ) {
+        return;
+      }
+
+      try {
+        /*
+         * Le backend possède actuellement
+         * l'endpoint pour passer une réclamation
+         * à l'état "Traité".
+         */
+        if (
+          draftStatus ===
+          'Traité'
+        ) {
+          await axios.patch(
+            `http://localhost:8082/api/admin/reclamations/${selectedComplaint.id}/traiter`
+          );
+        }
+
+        /*
+         * On recharge depuis MySQL
+         * pour avoir la vraie donnée backend.
+         */
+        await loadComplaints();
+
+        setReplyText('');
+      } catch (error) {
+        console.error(
+          'Erreur lors du traitement de la réclamation :',
+          error
+        );
+
+        alert(
+          'Impossible de mettre à jour la réclamation.'
+        );
+      }
+    };
+
+  /*
+   * ============================================================
+   * DÉCONNEXION
+   * ============================================================
+   */
+
+  const handleLogout =
+    () => {
+      localStorage.removeItem(
+        'confiSitUser'
+      );
+
+      navigate(
+        '/connexion'
+      );
+    };
+
+  /*
+   * ============================================================
+   * SÉLECTION UTILISATEUR
+   * ============================================================
+   */
+
+  const handleSelectUser =
+    (user) => {
+      setSelectedUser(
+        user
+      );
+
+      setEditingUser(
+        null
+      );
+    };
+
+  /*
+   * ============================================================
+   * SÉLECTION RÉCLAMATION
+   * ============================================================
+   */
+
+  const handleSelectComplaint =
+    (complaint) => {
+      setSelectedComplaint(
+        complaint
+      );
+
+      setDraftStatus(
+        complaint.status
+      );
+
+      setDraftPriority(
+        complaint.priority ||
+          'Normale'
+      );
+
+      setReplyText('');
+    };
+
+  /*
+   * ============================================================
+   * PROFIL DE L'AUTEUR
+   * ============================================================
+   */
+
+  const handleViewComplaintProfile =
+    () => {
+      const matchedUser =
+        selectedComplaint?.userId
+          ? users.find(
+              (user) =>
+                Number(
+                  user.id
+                ) ===
+                Number(
+                  selectedComplaint.userId
+                )
+            )
+          : users.find(
+              (user) =>
+                user.name ===
+                selectedComplaint?.userName
+            );
+
+      if (matchedUser) {
+        navigate(
+          '/espace-admin/profils',
+          {
+            state: {
+              focusEmail:
+                matchedUser.email,
+            },
+          }
+        );
+      } else if (
+        selectedComplaint?.userEmail
+      ) {
+        navigate(
+          '/espace-admin/profils',
+          {
+            state: {
+              focusEmail:
+                selectedComplaint.userEmail,
+            },
+          }
+        );
+      }
+    };
+
+  /*
+   * ============================================================
+   * INTERFACE
+   * ============================================================
+   */
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+
+      {/* ======================================================
+          SIDEBAR
+      ======================================================= */}
+
       <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+
         <div className="space-y-2">
-          <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">{t('adminSpace.sidebar.tag')}</p>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.sidebar.greeting', { name: currentUser?.name || t('adminSpace.sidebar.defaultName') })}</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-300">{t('adminSpace.sidebar.subtitle')}</p>
+
+          <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">
+            {t(
+              'adminSpace.sidebar.tag'
+            )}
+          </p>
+
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+            {t(
+              'adminSpace.sidebar.greeting',
+              {
+                name:
+                  currentUser?.name ||
+                  t(
+                    'adminSpace.sidebar.defaultName'
+                  ),
+              }
+            )}
+          </h1>
+
+          <p className="text-sm text-slate-600 dark:text-slate-300">
+            {t(
+              'adminSpace.sidebar.subtitle'
+            )}
+          </p>
+
         </div>
+
         <nav className="mt-8 space-y-2">
+
           {[
-            { to: '/espace-admin', label: t('adminSpace.nav.dashboard'), icon: LayoutGrid },
-            { to: '/espace-admin/statistiques', label: t('adminSpace.nav.statistics'), icon: PieChart },
-            { to: '/espace-admin/profils', label: t('adminSpace.nav.profiles'), icon: Users },
-            { to: '/espace-admin/reclamations', label: t('adminSpace.nav.complaints'), icon: ShieldAlert },
-          ].map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} end={to === '/espace-admin'} className={({ isActive }) => `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${isActive ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'}`}>
-              <Icon size={18} /> {label}
-            </NavLink>
-          ))}
+            {
+              to: '/espace-admin',
+              label: t(
+                'adminSpace.nav.dashboard'
+              ),
+              icon: LayoutGrid,
+            },
+
+            {
+              to: '/espace-admin/statistiques',
+              label: t(
+                'adminSpace.nav.statistics'
+              ),
+              icon: PieChart,
+            },
+
+            {
+              to: '/espace-admin/profils',
+              label: t(
+                'adminSpace.nav.profiles'
+              ),
+              icon: Users,
+            },
+
+            {
+              to: '/espace-admin/reclamations',
+              label: t(
+                'adminSpace.nav.complaints'
+              ),
+              icon: ShieldAlert,
+            },
+          ].map(
+            ({
+              to,
+              label,
+              icon: Icon,
+            }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={
+                  to ===
+                  '/espace-admin'
+                }
+                className={({
+                  isActive,
+                }) =>
+                  `flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                    isActive
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                      : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  }`
+                }
+              >
+                <Icon size={18} />
+
+                {label}
+              </NavLink>
+            )
+          )}
+
         </nav>
-        <button type="button" onClick={handleLogout} className="mt-8 flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-          <LogOut size={16} /> {t('adminSpace.logout')}
+
+        <button
+          type="button"
+          onClick={
+            handleLogout
+          }
+          className="mt-8 flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+        >
+          <LogOut size={16} />
+
+          {t(
+            'adminSpace.logout'
+          )}
         </button>
+
       </aside>
 
+      {/* ======================================================
+          CONTENU
+      ======================================================= */}
+
       <div className="space-y-6">
-        {location.pathname === '/espace-admin' ? (
+
+        {/* ====================================================
+            DASHBOARD
+        ===================================================== */}
+
+        {location.pathname ===
+          '/espace-admin' ? (
           <section className="space-y-6">
+
             <div className="rounded-3xl bg-gradient-to-br from-orange-500 to-amber-500 p-8 text-white shadow-[0_20px_60px_rgba(249,115,22,0.2)]">
-              <p className="text-sm uppercase tracking-[0.3em]">{t('adminSpace.dashboard.welcome')}</p>
-              <h2 className="mt-3 text-3xl font-extrabold">{t('adminSpace.dashboard.title')}</h2>
-              <p className="mt-3 max-w-2xl text-sm text-orange-50">{t('adminSpace.dashboard.subtitle')}</p>
+
+              <p className="text-sm uppercase tracking-[0.3em]">
+                {t(
+                  'adminSpace.dashboard.welcome'
+                )}
+              </p>
+
+              <h2 className="mt-3 text-3xl font-extrabold">
+                {t(
+                  'adminSpace.dashboard.title'
+                )}
+              </h2>
+
+              <p className="mt-3 max-w-2xl text-sm text-orange-50">
+                {t(
+                  'adminSpace.dashboard.subtitle'
+                )}
+              </p>
+
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {summaryCards.map((card) => (
-                <StatCard key={card.label} icon={card.icon} label={card.label} value={card.value} detail={card.detail} />
-              ))}
+
+              {summaryCards.map(
+                (card) => (
+                  <StatCard
+                    key={
+                      card.label
+                    }
+                    icon={
+                      card.icon
+                    }
+                    label={
+                      card.label
+                    }
+                    value={
+                      card.value
+                    }
+                    detail={
+                      card.detail
+                    }
+                  />
+                )
+              )}
+
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-              <ChartWidget title={t('adminSpace.dashboard.charts.registrationsTitle')} description={t('adminSpace.dashboard.charts.registrationsDesc')}>
+
+              <ChartWidget
+                title={t(
+                  'adminSpace.dashboard.charts.registrationsTitle'
+                )}
+                description={t(
+                  'adminSpace.dashboard.charts.registrationsDesc'
+                )}
+              >
+
                 <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={insightData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
-                      <XAxis dataKey="month" stroke="#64748b" />
-                      <YAxis stroke="#64748b" />
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
+
+                    <LineChart
+                      data={
+                        insightData
+                      }
+                    >
+
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#94a3b8"
+                        opacity={0.3}
+                      />
+
+                      <XAxis
+                        dataKey="month"
+                        stroke="#64748b"
+                      />
+
+                      <YAxis
+                        stroke="#64748b"
+                      />
+
                       <Tooltip />
+
                       <Legend />
-                      <Line type="monotone" dataKey="parents" stroke="#f59e0b" strokeWidth={3} />
-                      <Line type="monotone" dataKey="sitters" stroke="#fb923c" strokeWidth={3} />
+
+                      <Line
+                        type="monotone"
+                        dataKey="parents"
+                        stroke="#f59e0b"
+                        strokeWidth={3}
+                      />
+
+                      <Line
+                        type="monotone"
+                        dataKey="sitters"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                      />
+
                     </LineChart>
+
                   </ResponsiveContainer>
+
                 </div>
+
               </ChartWidget>
 
-              <ChartWidget title={t('adminSpace.dashboard.charts.rolesTitle')} description={t('adminSpace.dashboard.charts.rolesDesc')}>
+              <ChartWidget
+                title={t(
+                  'adminSpace.dashboard.charts.rolesTitle'
+                )}
+                description={t(
+                  'adminSpace.dashboard.charts.rolesDesc'
+                )}
+              >
+
                 <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
+
                     <RechartsPieChart>
-                      <Pie data={roleDistribution} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} paddingAngle={4}>
-                        {roleDistribution.map((entry, index) => <Cell key={`${entry.name}-${index}`} fill={ROLE_COLORS[entry.name] || COLORS[index % COLORS.length]} />)}
+
+                      <Pie
+                        data={
+                          roleDistribution
+                        }
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={4}
+                      >
+
+                        {roleDistribution.map(
+                          (
+                            entry,
+                            index
+                          ) => (
+                            <Cell
+                              key={`${entry.name}-${index}`}
+                              fill={
+                                ROLE_COLORS[
+                                  entry
+                                    .name
+                                ] ||
+                                COLORS[
+                                  index %
+                                    COLORS.length
+                                ]
+                              }
+                            />
+                          )
+                        )}
+
                       </Pie>
+
                       <Tooltip />
+
                       <Legend />
+
                     </RechartsPieChart>
+
                   </ResponsiveContainer>
+
                 </div>
+
               </ChartWidget>
+
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+
               <div className="flex items-center gap-3">
+
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                   <Activity size={18} />
                 </span>
+
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">{t('adminSpace.dashboard.activity.tag')}</p>
-                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.dashboard.activity.title')}</h3>
+
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">
+                    {t(
+                      'adminSpace.dashboard.activity.tag'
+                    )}
+                  </p>
+
+                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                    {t(
+                      'adminSpace.dashboard.activity.title'
+                    )}
+                  </h3>
+
                 </div>
+
               </div>
+
               <div className="mt-5 space-y-3">
-                {recentActivity.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{t('adminSpace.dashboard.activity.empty')}</p>
-                ) : recentActivity.map((item, index) => {
-                  const Icon = item.icon;
-                  return (
-                    <div key={`${item.type}-${index}`} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
-                          <Icon size={14} />
-                        </span>
-                        <p className="text-sm text-slate-700 dark:text-slate-200">{item.label}</p>
-                      </div>
-                      <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{relativeDate(item.date)}</span>
-                    </div>
-                  );
-                })}
+
+                {recentActivity.length ===
+                0 ? (
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t(
+                      'adminSpace.dashboard.activity.empty'
+                    )}
+                  </p>
+                ) : (
+                  recentActivity.map(
+                    (
+                      item,
+                      index
+                    ) => {
+                      const Icon =
+                        item.icon;
+
+                      return (
+                        <div
+                          key={`${item.type}-${index}`}
+                          className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800"
+                        >
+
+                          <div className="flex items-center gap-3">
+
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-400">
+                              <Icon size={14} />
+                            </span>
+
+                            <p className="text-sm text-slate-700 dark:text-slate-200">
+                              {
+                                item.label
+                              }
+                            </p>
+
+                          </div>
+
+                          <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                            {relativeDate(
+                              item.date
+                            )}
+                          </span>
+
+                        </div>
+                      );
+                    }
+                  )
+                )}
+
               </div>
+
             </div>
+
           </section>
         ) : null}
 
-        {location.pathname === '/espace-admin/statistiques' ? (
+        {/* ====================================================
+            STATISTIQUES
+        ===================================================== */}
+
+        {location.pathname ===
+          '/espace-admin/statistiques' ? (
           <section className="space-y-6">
+
             <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900">
+
               <div className="flex flex-wrap items-center justify-between gap-3">
+
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">{t('adminSpace.stats.tag')}</p>
-                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.stats.title')}</h2>
+
+                  <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">
+                    {t(
+                      'adminSpace.stats.tag'
+                    )}
+                  </p>
+
+                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+                    {t(
+                      'adminSpace.stats.title'
+                    )}
+                  </h2>
+
                 </div>
+
                 <div className="flex gap-2">
-                  {['7', '30', '365'].map((value) => (
-                    <button key={value} type="button" onClick={() => setPeriod(value)} className={`rounded-full px-4 py-2 text-sm font-semibold ${period === value ? 'bg-orange-600 text-white' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>
-                      {value === '7' ? t('adminSpace.stats.period.7days') : value === '30' ? t('adminSpace.stats.period.30days') : t('adminSpace.stats.period.year')}
-                    </button>
-                  ))}
+
+                  {[
+                    '7',
+                    '30',
+                    '365',
+                  ].map(
+                    (value) => (
+                      <button
+                        key={
+                          value
+                        }
+                        type="button"
+                        onClick={() =>
+                          setPeriod(
+                            value
+                          )
+                        }
+                        className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                          period ===
+                          value
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                        }`}
+                      >
+                        {value ===
+                        '7'
+                          ? t(
+                              'adminSpace.stats.period.7days'
+                            )
+                          : value ===
+                            '30'
+                          ? t(
+                              'adminSpace.stats.period.30days'
+                            )
+                          : t(
+                              'adminSpace.stats.period.year'
+                            )}
+                      </button>
+                    )
+                  )}
+
                 </div>
+
               </div>
+
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
-              <ChartWidget title={t('adminSpace.stats.charts.monthlyRegistrations')} description={t('adminSpace.dashboard.charts.registrationsDesc')}>
+
+              <ChartWidget
+                title={t(
+                  'adminSpace.stats.charts.monthlyRegistrations'
+                )}
+                description={t(
+                  'adminSpace.dashboard.charts.registrationsDesc'
+                )}
+              >
+
                 <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={insightData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
-                      <XAxis dataKey="month" stroke="#64748b" />
-                      <YAxis stroke="#64748b" />
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
+
+                    <LineChart
+                      data={
+                        insightData
+                      }
+                    >
+
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#94a3b8"
+                        opacity={0.3}
+                      />
+
+                      <XAxis
+                        dataKey="month"
+                        stroke="#64748b"
+                      />
+
+                      <YAxis
+                        stroke="#64748b"
+                      />
+
                       <Tooltip />
+
                       <Legend />
-                      <Line type="monotone" dataKey="parents" stroke="#f59e0b" />
-                      <Line type="monotone" dataKey="sitters" stroke="#fb923c" />
+
+                      <Line
+                        type="monotone"
+                        dataKey="parents"
+                        stroke="#f59e0b"
+                      />
+
+                      <Line
+                        type="monotone"
+                        dataKey="sitters"
+                        stroke="#3b82f6"
+                      />
+
                     </LineChart>
+
                   </ResponsiveContainer>
+
                 </div>
+
               </ChartWidget>
-              <ChartWidget title={t('adminSpace.stats.charts.monthlyReservations')} description={t('adminSpace.stats.charts.monthlyReservationsDesc')}>
+
+              <ChartWidget
+                title={t(
+                  'adminSpace.stats.charts.monthlyReservations'
+                )}
+                description={t(
+                  'adminSpace.stats.charts.monthlyReservationsDesc'
+                )}
+              >
+
                 <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={insightData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" opacity={0.3} />
-                      <XAxis dataKey="month" stroke="#64748b" />
-                      <YAxis stroke="#64748b" />
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
+
+                    <BarChart
+                      data={
+                        insightData
+                      }
+                    >
+
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#94a3b8"
+                        opacity={0.3}
+                      />
+
+                      <XAxis
+                        dataKey="month"
+                        stroke="#64748b"
+                      />
+
+                      <YAxis
+                        stroke="#64748b"
+                      />
+
                       <Tooltip />
-                      <Bar dataKey="reservations" fill="#f59e0b" radius={[8, 8, 0, 0]} />
+
+                      <Bar
+                        dataKey="reservations"
+                        fill="#f59e0b"
+                        radius={[
+                          8,
+                          8,
+                          0,
+                          0,
+                        ]}
+                      />
+
                     </BarChart>
+
                   </ResponsiveContainer>
+
                 </div>
+
               </ChartWidget>
+
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
+
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><TrendingUp size={18} /></span>
+
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    <TrendingUp size={18} />
+                  </span>
+
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">{t('adminSpace.stats.ranking.tag')}</p>
-                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.stats.ranking.title')}</h3>
+
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">
+                      {t(
+                        'adminSpace.stats.ranking.tag'
+                      )}
+                    </p>
+
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                      {t(
+                        'adminSpace.stats.ranking.title'
+                      )}
+                    </h3>
+
                   </div>
+
                 </div>
+
                 <div className="mt-5 space-y-3">
-                  {topBabysitters.length === 0 ? (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('adminSpace.stats.ranking.empty')}</p>
-                  ) : topBabysitters.map((sitter, index) => (
-                    <div key={sitter.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-sm font-extrabold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">#{index + 1}</span>
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{sitter.name}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{t('adminSpace.stats.ranking.reservationCount', { count: sitter.reservationCount })}</p>
+
+                  {topBabysitters.length ===
+                  0 ? (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {t(
+                        'adminSpace.stats.ranking.empty'
+                      )}
+                    </p>
+                  ) : (
+                    topBabysitters.map(
+                      (
+                        sitter,
+                        index
+                      ) => (
+                        <div
+                          key={
+                            sitter.id
+                          }
+                          className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 dark:bg-slate-800"
+                        >
+
+                          <div className="flex items-center gap-3">
+
+                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-sm font-extrabold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                              #
+                              {index +
+                                1}
+                            </span>
+
+                            <div>
+
+                              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {
+                                  sitter.name
+                                }
+                              </p>
+
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {t(
+                                  'adminSpace.stats.ranking.reservationCount',
+                                  {
+                                    count:
+                                      sitter.reservationCount,
+                                  }
+                                )}
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                          <span className="text-sm font-semibold text-amber-700">
+                            ★{' '}
+                            {sitter.rating ||
+                              '—'}
+                          </span>
+
                         </div>
-                      </div>
-                      <span className="text-sm font-semibold text-amber-700">★ {sitter.rating || '—'}</span>
-                    </div>
-                  ))}
+                      )
+                    )
+                  )}
+
                 </div>
+
               </div>
 
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"><ShieldAlert size={18} /></span>
+
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
+                    <ShieldAlert size={18} />
+                  </span>
+
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">{t('adminSpace.stats.reliability.tag')}</p>
-                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.stats.reliability.title')}</h3>
+
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">
+                      {t(
+                        'adminSpace.stats.reliability.tag'
+                      )}
+                    </p>
+
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                      {t(
+                        'adminSpace.stats.reliability.title'
+                      )}
+                    </h3>
+
                   </div>
+
                 </div>
+
                 <div className="mt-5 space-y-3">
-                  {acceptanceStats.length === 0 ? (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{t('adminSpace.stats.reliability.empty')}</p>
-                  ) : acceptanceStats.map((sitter) => (
-                    <div key={sitter.id} className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-semibold text-slate-800 dark:text-slate-100">{sitter.name}</span>
-                        <span className="font-semibold text-slate-600 dark:text-slate-300">{sitter.accepted}/{sitter.answered} ({sitter.rate}%)</span>
-                      </div>
-                      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                        <div className={`h-full rounded-full ${sitter.rate >= 70 ? 'bg-emerald-500' : sitter.rate >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${sitter.rate}%` }} />
-                      </div>
-                    </div>
-                  ))}
+
+                  {acceptanceStats.length ===
+                  0 ? (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {t(
+                        'adminSpace.stats.reliability.empty'
+                      )}
+                    </p>
+                  ) : (
+                    acceptanceStats.map(
+                      (
+                        sitter
+                      ) => (
+                        <div
+                          key={
+                            sitter.id
+                          }
+                          className="rounded-2xl bg-slate-50 p-3 dark:bg-slate-800"
+                        >
+
+                          <div className="flex items-center justify-between text-sm">
+
+                            <span className="font-semibold text-slate-800 dark:text-slate-100">
+                              {
+                                sitter.name
+                              }
+                            </span>
+
+                            <span className="font-semibold text-slate-600 dark:text-slate-300">
+                              {
+                                sitter.accepted
+                              }
+                              /
+                              {
+                                sitter.answered
+                              }{' '}
+                              (
+                              {
+                                sitter.rate
+                              }
+                              %)
+                            </span>
+
+                          </div>
+
+                          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+
+                            <div
+                              className={`h-full rounded-full ${
+                                sitter.rate >=
+                                70
+                                  ? 'bg-emerald-500'
+                                  : sitter.rate >=
+                                    40
+                                  ? 'bg-amber-500'
+                                  : 'bg-red-500'
+                              }`}
+                              style={{
+                                width: `${sitter.rate}%`,
+                              }}
+                            />
+
+                          </div>
+
+                        </div>
+                      )
+                    )
+                  )}
+
                 </div>
+
               </div>
+
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
+
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"><Clock size={18} /></span>
+
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    <Clock size={18} />
+                  </span>
+
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">{t('adminSpace.stats.support.tag')}</p>
-                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.stats.support.title')}</h3>
+
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">
+                      {t(
+                        'adminSpace.stats.support.tag'
+                      )}
+                    </p>
+
+                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                      {t(
+                        'adminSpace.stats.support.title'
+                      )}
+                    </h3>
+
                   </div>
+
                 </div>
-                <p className="mt-4 text-3xl font-extrabold text-slate-900 dark:text-slate-100">{complaintResponseTime !== null ? `${complaintResponseTime} j` : '—'}</p>
-                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t('adminSpace.stats.support.description')}</p>
+
+                <p className="mt-4 text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                  {complaintResponseTime !==
+                  null
+                    ? `${complaintResponseTime} j`
+                    : '—'}
+                </p>
+
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                  {t(
+                    'adminSpace.stats.support.description'
+                  )}
+                </p>
+
               </div>
-              <ChartWidget title={t('adminSpace.stats.complaintsChart.title')} description={t('adminSpace.stats.complaintsChart.description')}>
+
+              <ChartWidget
+                title={t(
+                  'adminSpace.stats.complaintsChart.title'
+                )}
+                description={t(
+                  'adminSpace.stats.complaintsChart.description'
+                )}
+              >
+
                 <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
+
                     <RechartsPieChart>
-                      <Pie data={complaintDistribution} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} paddingAngle={4}>
-                        {complaintDistribution.map((entry, index) => <Cell key={`${entry.name}-${index}`} fill={COMPLAINT_COLORS[entry.name] || COLORS[index % COLORS.length]} />)}
+
+                      <Pie
+                        data={
+                          complaintDistribution
+                        }
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={4}
+                      >
+
+                        {complaintDistribution.map(
+                          (
+                            entry,
+                            index
+                          ) => (
+                            <Cell
+                              key={`${entry.name}-${index}`}
+                              fill={
+                                COMPLAINT_COLORS[
+                                  entry
+                                    .name
+                                ] ||
+                                COLORS[
+                                  index %
+                                    COLORS.length
+                                ]
+                              }
+                            />
+                          )
+                        )}
+
                       </Pie>
+
                       <Tooltip />
+
                       <Legend />
+
                     </RechartsPieChart>
+
                   </ResponsiveContainer>
+
                 </div>
+
               </ChartWidget>
+
             </div>
+
           </section>
         ) : null}
 
-        {location.pathname === '/espace-admin/profils' ? (
+        {/* ====================================================
+            PROFILS
+        ===================================================== */}
+
+        {location.pathname ===
+          '/espace-admin/profils' ? (
           <section className="space-y-6">
+
             <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900">
+
               <div className="flex flex-col gap-4">
+
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">{t('adminSpace.profiles.tag')}</p>
-                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.profiles.title')}</h2>
+
+                  <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">
+                    {t(
+                      'adminSpace.profiles.tag'
+                    )}
+                  </p>
+
+                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+                    {t(
+                      'adminSpace.profiles.title'
+                    )}
+                  </h2>
+
                 </div>
+
                 <div className="flex flex-wrap gap-2">
-                  <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder={t('adminSpace.profiles.searchPlaceholder')} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" />
-                  <input value={zoneFilter} onChange={(event) => setZoneFilter(event.target.value)} placeholder={t('adminSpace.profiles.zonePlaceholder')} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" />
-                  <select value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
-                    <option value="all">{t('adminSpace.profiles.allRoles')}</option>
-                    <option value="parent">{t('adminSpace.roles.parent')}</option>
-                    <option value="babysitter">{t('adminSpace.roles.babysitter')}</option>
-                    <option value="admin">{t('adminSpace.roles.admin')}</option>
+
+                  <input
+                    value={
+                      searchTerm
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setSearchTerm(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    placeholder={t(
+                      'adminSpace.profiles.searchPlaceholder'
+                    )}
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  />
+
+                  <input
+                    value={
+                      zoneFilter
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setZoneFilter(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    placeholder={t(
+                      'adminSpace.profiles.zonePlaceholder'
+                    )}
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  />
+
+                  <select
+                    value={
+                      roleFilter
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setRoleFilter(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  >
+
+                    <option value="all">
+                      {t(
+                        'adminSpace.profiles.allRoles'
+                      )}
+                    </option>
+
+                    <option value="parent">
+                      {t(
+                        'adminSpace.roles.parent'
+                      )}
+                    </option>
+
+                    <option value="babysitter">
+                      {t(
+                        'adminSpace.roles.babysitter'
+                      )}
+                    </option>
+
+                    <option value="admin">
+                      {t(
+                        'adminSpace.roles.admin'
+                      )}
+                    </option>
+
                   </select>
-                  <select value={minRatingFilter} onChange={(event) => setMinRatingFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
-                    <option value="0">{t('adminSpace.profiles.allRatings')}</option>
-                    <option value="3">{t('adminSpace.profiles.ratingAndAbove', { rating: 3 })}</option>
-                    <option value="4">{t('adminSpace.profiles.ratingAndAbove', { rating: 4 })}</option>
-                    <option value="4.5">{t('adminSpace.profiles.ratingAndAbove', { rating: 4.5 })}</option>
+
+                  <select
+                    value={
+                      minRatingFilter
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setMinRatingFilter(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  >
+
+                    <option value="0">
+                      {t(
+                        'adminSpace.profiles.allRatings'
+                      )}
+                    </option>
+
+                    <option value="3">
+                      {t(
+                        'adminSpace.profiles.ratingAndAbove',
+                        {
+                          rating: 3,
+                        }
+                      )}
+                    </option>
+
+                    <option value="4">
+                      {t(
+                        'adminSpace.profiles.ratingAndAbove',
+                        {
+                          rating: 4,
+                        }
+                      )}
+                    </option>
+
+                    <option value="4.5">
+                      {t(
+                        'adminSpace.profiles.ratingAndAbove',
+                        {
+                          rating: 4.5,
+                        }
+                      )}
+                    </option>
+
                   </select>
-                  <select value={accountStatusFilter} onChange={(event) => setAccountStatusFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
-                    <option value="all">{t('adminSpace.profiles.allStatuses')}</option>
-                    <option value="Actif">{t('adminSpace.accountStatus.Actif')}</option>
-                    <option value="En attente">{t('adminSpace.accountStatus.En attente')}</option>
-                    <option value="Suspendu">{t('adminSpace.accountStatus.Suspendu')}</option>
+
+                  <select
+                    value={
+                      accountStatusFilter
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setAccountStatusFilter(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  >
+
+                    <option value="all">
+                      {t(
+                        'adminSpace.profiles.allStatuses'
+                      )}
+                    </option>
+
+                    <option value="Actif">
+                      {t(
+                        'adminSpace.accountStatus.Actif'
+                      )}
+                    </option>
+
+                    <option value="En attente">
+                      {t(
+                        'adminSpace.accountStatus.En attente'
+                      )}
+                    </option>
+
+                    <option value="Suspendu">
+                      {t(
+                        'adminSpace.accountStatus.Suspendu'
+                      )}
+                    </option>
+
                   </select>
+
                 </div>
+
               </div>
+
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <UserTable users={filteredUsers} selectedUserId={selectedUser?.id} onSelect={handleSelectUser} />
+
+              <UserTable
+                users={
+                  filteredUsers
+                }
+                selectedUserId={
+                  selectedUser?.id
+                }
+                onSelect={
+                  handleSelectUser
+                }
+              />
+
               <div className="space-y-6">
-                <UserDetailCard user={selectedUser} onEdit={() => setEditingUser(selectedUser)} onToggleVerify={handleToggleVerify} />
+
+                <UserDetailCard
+                  user={
+                    selectedUser
+                  }
+                  onEdit={() =>
+                    setEditingUser(
+                      selectedUser
+                    )
+                  }
+                  onToggleVerify={
+                    handleToggleVerify
+                  }
+                />
+
                 {editingUser ? (
-                  <form onSubmit={handleSaveUser} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                  <form
+                    onSubmit={
+                      handleSaveUser
+                    }
+                    className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                  >
+
                     <div className="grid gap-4 md:grid-cols-2">
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.name')}<input name="name" defaultValue={editingUser.name} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.email')}<input name="email" defaultValue={editingUser.email} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.role')}<select name="role" defaultValue={editingUser.role} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"><option value="parent">{t('adminSpace.roles.parent')}</option><option value="babysitter">{t('adminSpace.roles.babysitter')}</option><option value="admin">{t('adminSpace.roles.admin')}</option></select></label>
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.status')}<select name="status" defaultValue={editingUser.status} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"><option value="Actif">{t('adminSpace.accountStatus.Actif')}</option><option value="En attente">{t('adminSpace.accountStatus.En attente')}</option><option value="Suspendu">{t('adminSpace.accountStatus.Suspendu')}</option></select></label>
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.phone')}<input name="phone" defaultValue={editingUser.phone} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.address')}<input name="address" defaultValue={editingUser.address} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                      {editingUser.role === 'parent' ? (
-                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.children')}<input name="childrenCount" defaultValue={editingUser.childrenCount} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {t(
+                          'adminSpace.editForm.name'
+                        )}
+
+                        <input
+                          name="name"
+                          defaultValue={
+                            editingUser.name
+                          }
+                          className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        />
+                      </label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {t(
+                          'adminSpace.editForm.email'
+                        )}
+
+                        <input
+                          name="email"
+                          defaultValue={
+                            editingUser.email
+                          }
+                          className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        />
+                      </label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {t(
+                          'adminSpace.editForm.role'
+                        )}
+
+                        <select
+                          name="role"
+                          defaultValue={
+                            editingUser.role
+                          }
+                          className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        >
+
+                          <option value="parent">
+                            {t(
+                              'adminSpace.roles.parent'
+                            )}
+                          </option>
+
+                          <option value="babysitter">
+                            {t(
+                              'adminSpace.roles.babysitter'
+                            )}
+                          </option>
+
+                          <option value="admin">
+                            {t(
+                              'adminSpace.roles.admin'
+                            )}
+                          </option>
+
+                        </select>
+                      </label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {t(
+                          'adminSpace.editForm.status'
+                        )}
+
+                        <select
+                          name="status"
+                          defaultValue={
+                            editingUser.status
+                          }
+                          className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        >
+
+                          <option value="Actif">
+                            {t(
+                              'adminSpace.accountStatus.Actif'
+                            )}
+                          </option>
+
+                          <option value="En attente">
+                            {t(
+                              'adminSpace.accountStatus.En attente'
+                            )}
+                          </option>
+
+                          <option value="Suspendu">
+                            {t(
+                              'adminSpace.accountStatus.Suspendu'
+                            )}
+                          </option>
+
+                        </select>
+                      </label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {t(
+                          'adminSpace.editForm.phone'
+                        )}
+
+                        <input
+                          name="phone"
+                          defaultValue={
+                            editingUser.phone
+                          }
+                          className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        />
+                      </label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                        {t(
+                          'adminSpace.editForm.address'
+                        )}
+
+                        <input
+                          name="address"
+                          defaultValue={
+                            editingUser.address
+                          }
+                          className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        />
+                      </label>
+
+                      {editingUser.role ===
+                      'parent' ? (
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+
+                          {t(
+                            'adminSpace.editForm.children'
+                          )}
+
+                          <input
+                            name="childrenCount"
+                            defaultValue={
+                              editingUser.childrenCount
+                            }
+                            className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                          />
+
+                        </label>
                       ) : (
                         <>
-                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.hourlyRate')}<input name="hourlyRate" defaultValue={editingUser.hourlyRate} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.experience')}<input name="experience" defaultValue={editingUser.experience} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.zone')}<input name="zone" defaultValue={editingUser.zone} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">{t('adminSpace.editForm.availability')}<input name="availability" defaultValue={editingUser.availability?.join(', ')} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
+                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+
+                            {t(
+                              'adminSpace.editForm.hourlyRate'
+                            )}
+
+                            <input
+                              name="hourlyRate"
+                              defaultValue={
+                                editingUser.hourlyRate
+                              }
+                              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                            />
+
+                          </label>
+
+                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+
+                            {t(
+                              'adminSpace.editForm.experience'
+                            )}
+
+                            <input
+                              name="experience"
+                              defaultValue={
+                                editingUser.experience
+                              }
+                              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                            />
+
+                          </label>
+
+                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+
+                            {t(
+                              'adminSpace.editForm.zone'
+                            )}
+
+                            <input
+                              name="zone"
+                              defaultValue={
+                                editingUser.zone
+                              }
+                              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                            />
+
+                          </label>
+
+                          <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+
+                            {t(
+                              'adminSpace.editForm.availability'
+                            )}
+
+                            <input
+                              name="availability"
+                              defaultValue={
+                                editingUser.availability?.join(
+                                  ', '
+                                )
+                              }
+                              className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                            />
+
+                          </label>
                         </>
                       )}
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 md:col-span-2">{t('adminSpace.editForm.notes')}<textarea name="notes" defaultValue={editingUser.notes || ''} className="mt-2 min-h-20 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
-                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 md:col-span-2">{t('adminSpace.editForm.bio')}<textarea name="bio" defaultValue={editingUser.bio || ''} className="mt-2 min-h-20 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" /></label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 md:col-span-2">
+
+                        {t(
+                          'adminSpace.editForm.notes'
+                        )}
+
+                        <textarea
+                          name="notes"
+                          defaultValue={
+                            editingUser.notes ||
+                            ''
+                          }
+                          className="mt-2 min-h-20 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        />
+
+                      </label>
+
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 md:col-span-2">
+
+                        {t(
+                          'adminSpace.editForm.bio'
+                        )}
+
+                        <textarea
+                          name="bio"
+                          defaultValue={
+                            editingUser.bio ||
+                            ''
+                          }
+                          className="mt-2 min-h-20 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        />
+
+                      </label>
+
                     </div>
+
                     <div className="mt-6 flex flex-wrap gap-3">
-                      <button type="submit" className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white">{t('adminSpace.editForm.save')}</button>
-                      <button type="button" onClick={() => setEditingUser(null)} className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-300">{t('adminSpace.editForm.cancel')}</button>
-                      <button type="button" onClick={() => setIsConfirmOpen(true)} className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white">{t('adminSpace.editForm.delete')}</button>
+
+                      <button
+                        type="submit"
+                        className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        {t(
+                          'adminSpace.editForm.save'
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingUser(
+                            null
+                          )
+                        }
+                        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-300"
+                      >
+                        {t(
+                          'adminSpace.editForm.cancel'
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsConfirmOpen(
+                            true
+                          )
+                        }
+                        className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        {t(
+                          'adminSpace.editForm.delete'
+                        )}
+                      </button>
+
                     </div>
+
                   </form>
                 ) : null}
+
               </div>
+
             </div>
-            <ConfirmModal isOpen={isConfirmOpen} title={t('adminSpace.confirmDelete.title')} message={t('adminSpace.confirmDelete.message')} onCancel={() => setIsConfirmOpen(false)} onConfirm={handleDeleteUser} />
+
+            <ConfirmModal
+              isOpen={
+                isConfirmOpen
+              }
+              title={t(
+                'adminSpace.confirmDelete.title'
+              )}
+              message={t(
+                'adminSpace.confirmDelete.message'
+              )}
+              onCancel={() =>
+                setIsConfirmOpen(
+                  false
+                )
+              }
+              onConfirm={
+                handleDeleteUser
+              }
+            />
+
           </section>
         ) : null}
 
-        {location.pathname === '/espace-admin/reclamations' ? (
+        {/* ====================================================
+            RÉCLAMATIONS
+        ===================================================== */}
+
+        {location.pathname ===
+          '/espace-admin/reclamations' ? (
           <section className="space-y-6">
+
             <div className="rounded-3xl bg-white p-5 shadow-sm dark:bg-slate-900">
+
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">{t('adminSpace.complaints.tag')}</p>
-                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">{t('adminSpace.complaints.title')}</h2>
+
+                  <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">
+                    {t(
+                      'adminSpace.complaints.tag'
+                    )}
+                  </p>
+
+                  <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+                    {t(
+                      'adminSpace.complaints.title'
+                    )}
+                  </h2>
+
                 </div>
-                <select value={complaintFilter} onChange={(event) => setComplaintFilter(event.target.value)} className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800">
-                  <option value="all">{t('adminSpace.complaints.allStatuses')}</option>
-                  <option value="En attente">{t('parentSpace.complaint.status.pending')}</option>
-                  <option value="Traité">{t('parentSpace.complaint.status.done')}</option>
+
+                <select
+                  value={
+                    complaintFilter
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setComplaintFilter(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                >
+
+                  <option value="all">
+                    {t(
+                      'adminSpace.complaints.allStatuses'
+                    )}
+                  </option>
+
+                  <option value="En attente">
+                    {t(
+                      'parentSpace.complaint.status.pending'
+                    )}
+                  </option>
+
+                  <option value="Traité">
+                    {t(
+                      'parentSpace.complaint.status.done'
+                    )}
+                  </option>
+
                 </select>
+
               </div>
+
             </div>
+
             <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+
+              {/* ==================================================
+                  LISTE DES RÉCLAMATIONS BACKEND
+              =================================================== */}
+
               <div className="space-y-4">
-                {filteredComplaints.map((complaint) => <ComplaintCard key={complaint.id} complaint={complaint} onSelect={() => handleSelectComplaint(complaint)} />)}
+
+                {filteredComplaints.length ===
+                0 ? (
+                  <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Aucune réclamation trouvée.
+                    </p>
+
+                  </div>
+                ) : (
+                  filteredComplaints.map(
+                    (complaint) => (
+                      <ComplaintCard
+                        key={
+                          complaint.id
+                        }
+                        complaint={
+                          complaint
+                        }
+                        onSelect={() =>
+                          handleSelectComplaint(
+                            complaint
+                          )
+                        }
+                      />
+                    )
+                  )
+                )}
+
               </div>
+
+              {/* ==================================================
+                  DÉTAIL RÉCLAMATION
+              =================================================== */}
+
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+
                 {selectedComplaint ? (
                   <div className="space-y-4">
+
                     <div className="flex items-start justify-between gap-3">
+
                       <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">{t('adminSpace.complaints.detail')}</p>
-                        <h3 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-slate-100">{selectedComplaint.subject}</h3>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('adminSpace.complaints.filedBy', { name: selectedComplaint.userName, date: selectedComplaint.date })}</p>
+
+                        <p className="text-sm font-semibold uppercase tracking-[0.32em] text-orange-600">
+                          {t(
+                            'adminSpace.complaints.detail'
+                          )}
+                        </p>
+
+                        <h3 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-slate-100">
+                          {
+                            selectedComplaint.subject
+                          }
+                        </h3>
+
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+
+                          {t(
+                            'adminSpace.complaints.filedBy',
+                            {
+                              name:
+                                selectedComplaint.userName,
+                              date:
+                                selectedComplaint.date,
+                            }
+                          )}
+
+                        </p>
+
                       </div>
-                      <button type="button" onClick={handleViewComplaintProfile} className="shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
-                        {t('adminSpace.complaints.viewProfile')}
+
+                      <button
+                        type="button"
+                        onClick={
+                          handleViewComplaintProfile
+                        }
+                        className="shrink-0 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                      >
+                        {t(
+                          'adminSpace.complaints.viewProfile'
+                        )}
                       </button>
+
                     </div>
+
+                    {/* FIL DE DISCUSSION */}
 
                     <div className="space-y-3 rounded-2xl bg-slate-50 p-4 dark:bg-slate-800">
-                      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">{t('adminSpace.complaints.thread')}</p>
-                      {(selectedComplaint.messages || []).map((msg, index) => (
-                        <div key={index} className={`rounded-2xl p-3 text-sm ${msg.author === 'Support' ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-white dark:bg-slate-900'}`}>
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-slate-800 dark:text-slate-100">{msg.author}</span>
-                            <span className="text-xs text-slate-400">{msg.date}</span>
+
+                      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">
+                        {t(
+                          'adminSpace.complaints.thread'
+                        )}
+                      </p>
+
+                      {(
+                        selectedComplaint.messages ||
+                        []
+                      ).map(
+                        (
+                          msg,
+                          index
+                        ) => (
+                          <div
+                            key={
+                              index
+                            }
+                            className={`rounded-2xl p-3 text-sm ${
+                              msg.author ===
+                              'Support'
+                                ? 'bg-orange-50 dark:bg-orange-900/20'
+                                : 'bg-white dark:bg-slate-900'
+                            }`}
+                          >
+
+                            <div className="flex items-center justify-between">
+
+                              <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                {
+                                  msg.author
+                                }
+                              </span>
+
+                              <span className="text-xs text-slate-400">
+                                {
+                                  msg.date
+                                }
+                              </span>
+
+                            </div>
+
+                            <p className="mt-1 text-slate-600 dark:text-slate-300">
+                              {
+                                msg.text
+                              }
+                            </p>
+
                           </div>
-                          <p className="mt-1 text-slate-600 dark:text-slate-300">{msg.text}</p>
-                        </div>
-                      ))}
+                        )
+                      )}
+
                     </div>
 
-                    <form onSubmit={handleSaveComplaint} className="space-y-4">
+                    {/* FORMULAIRE TRAITEMENT */}
+
+                    <form
+                      onSubmit={
+                        handleSaveComplaint
+                      }
+                      className="space-y-4"
+                    >
+
                       <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-                        {t('adminSpace.complaints.replyLabel')}
-                        <textarea value={replyText} onChange={(event) => setReplyText(event.target.value)} rows="3" placeholder={t('adminSpace.complaints.replyPlaceholder')} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" />
+
+                        {t(
+                          'adminSpace.complaints.replyLabel'
+                        )}
+
+                        <textarea
+                          value={
+                            replyText
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            setReplyText(
+                              event
+                                .target
+                                .value
+                            )
+                          }
+                          rows="3"
+                          placeholder={t(
+                            'adminSpace.complaints.replyPlaceholder'
+                          )}
+                          className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                        />
+
                       </label>
+
                       <div className="grid gap-4 sm:grid-cols-2">
+
                         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          {t('adminSpace.complaints.statusLabel')}
-                          <select value={draftStatus} onChange={(event) => setDraftStatus(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-                            <option value="En attente">{t('parentSpace.complaint.status.pending')}</option>
-                            <option value="Traité">{t('parentSpace.complaint.status.done')}</option>
+
+                          {t(
+                            'adminSpace.complaints.statusLabel'
+                          )}
+
+                          <select
+                            value={
+                              draftStatus
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              setDraftStatus(
+                                event
+                                  .target
+                                  .value
+                              )
+                            }
+                            className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                          >
+
+                            <option value="En attente">
+                              {t(
+                                'parentSpace.complaint.status.pending'
+                              )}
+                            </option>
+
+                            <option value="Traité">
+                              {t(
+                                'parentSpace.complaint.status.done'
+                              )}
+                            </option>
+
                           </select>
+
                         </label>
+
                         <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-                          {t('adminSpace.complaints.priorityLabel')}
-                          <select value={draftPriority} onChange={(event) => setDraftPriority(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
-                            <option value="Normale">{t('adminSpace.priority.normal')}</option>
-                            <option value="Urgente">{t('adminSpace.priority.urgent')}</option>
+
+                          {t(
+                            'adminSpace.complaints.priorityLabel'
+                          )}
+
+                          <select
+                            value={
+                              draftPriority
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              setDraftPriority(
+                                event
+                                  .target
+                                  .value
+                              )
+                            }
+                            className="mt-2 w-full rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+                          >
+
+                            <option value="Normale">
+                              {t(
+                                'adminSpace.priority.normal'
+                              )}
+                            </option>
+
+                            <option value="Urgente">
+                              {t(
+                                'adminSpace.priority.urgent'
+                              )}
+                            </option>
+
                           </select>
+
                         </label>
+
                       </div>
+
                       {(() => {
-                        const detection = detectComplaintPriority(selectedComplaint.subject, selectedComplaint.message);
+                        const detection =
+                          detectComplaintPriority(
+                            selectedComplaint.subject,
+                            selectedComplaint.message
+                          );
+
                         return detection.matchedKeyword ? (
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            🔎 Priorité suggérée automatiquement à la création (mot-clé détecté : « {detection.matchedKeyword} »)
+                            🔎 Priorité suggérée automatiquement à la création (mot-clé détecté : «{' '}
+                            {
+                              detection.matchedKeyword
+                            }{' '}
+                            »)
                           </p>
                         ) : null;
                       })()}
-                      <button type="submit" className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white">{t('adminSpace.complaints.save')}</button>
+
+                      <button
+                        type="submit"
+                        className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white"
+                      >
+                        {t(
+                          'adminSpace.complaints.save'
+                        )}
+                      </button>
+
                     </form>
+
                   </div>
-                ) : <p className="text-sm text-slate-500">{t('adminSpace.complaints.selectPrompt')}</p>}
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    {t(
+                      'adminSpace.complaints.selectPrompt'
+                    )}
+                  </p>
+                )}
+
               </div>
+
             </div>
+
           </section>
         ) : null}
 
         <Outlet />
+
       </div>
+
     </div>
   );
 }

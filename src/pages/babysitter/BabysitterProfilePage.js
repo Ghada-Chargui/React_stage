@@ -74,6 +74,23 @@ function BabysitterProfilePage() {
 
   const dismissSuggestion = () => setSuggestedBio(null);
 
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setProfile((current) => ({
+        ...current,
+        photo: reader.result,
+      }));
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     const nextUser = { ...JSON.parse(localStorage.getItem('confiSitUser') || '{}'), ...profile };
@@ -97,7 +114,17 @@ function BabysitterProfilePage() {
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4 md:grid-cols-2">
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 md:col-span-2">
             {t('babysitterSpace.profile.fields.photo')}
-            <input value={profile.photo} onChange={(event) => setProfile({ ...profile, photo: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" placeholder={t('babysitterSpace.profile.fields.photoPlaceholder')} />
+            <input type="file" accept="image/*" onChange={handlePhotoChange} className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800" />
+            {profile.photo && (
+              <img
+                src={profile.photo}
+                alt={t('babysitterSpace.profile.fields.photo')}
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none';
+                }}
+                className="mt-3 h-24 w-24 rounded-2xl object-cover"
+              />
+            )}
           </label>
           <label className="text-sm font-semibold text-slate-700 dark:text-slate-200 md:col-span-2">
             <div className="flex items-center justify-between">

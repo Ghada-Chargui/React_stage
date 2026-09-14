@@ -60,7 +60,7 @@ function ParentDashboardPage({ user }) {
   ];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
       <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <div className="space-y-2">
           <p className="text-sm font-extrabold uppercase tracking-[0.32em] text-orange-600">{t('parentSpace.dashboard.tag')}</p>

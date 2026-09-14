@@ -36,6 +36,16 @@ const AGE_GROUP_PATTERNS = [
   { pattern: /(ado|adolescent)/i, label: 'les adolescents' },
 ];
 
+const getVariationIndex = (value, length) => {
+  const text = String(value || '');
+  const hash = [...text].reduce(
+    (total, character) => (total * 31 + character.charCodeAt(0)) % 100000,
+    0
+  );
+
+  return hash % length;
+};
+
 const buildLocalBio = (rawText, context = {}) => {
   const source = rawText || '';
   const { experience, zone, languages } = context;
@@ -47,15 +57,40 @@ const buildLocalBio = (rawText, context = {}) => {
   const experienceYears = expMatch ? expMatch[1] : experience;
 
   const traitText = traits.length ? traits.slice(0, 2).join(' et ') : 'passionnée et attentive';
-  const sentence1 = `Babysitter ${traitText}${experienceYears ? `, avec ${experienceYears} ans d’expérience` : ''}${zone ? ` dans la région de ${zone}` : ''}.`;
+  const variationKey = [source, experience, zone, languages?.join(',')].join('|');
+  const sentence1Options = [
+    `Babysitter ${traitText}${experienceYears ? `, avec ${experienceYears} ans d’expérience` : ''}${zone ? ` dans la région de ${zone}` : ''}.`,
+    `Avec ${experienceYears || 'plusieurs'} ans d’expérience${zone ? ` à ${zone}` : ''}, je suis une babysitter ${traitText}.`,
+    `Je propose une garde ${traitText}${zone ? ` pour les familles de ${zone}` : ''}${experienceYears ? `, forte de ${experienceYears} ans d’expérience` : ''}.`,
+  ];
 
-  const sentence2 = ageGroups.length
-    ? `Spécialisée dans l’accompagnement de ${ageGroups.join(', ')}, je m’adapte au rythme et aux besoins de chaque enfant.`
-    : 'Je m’adapte au rythme et aux besoins de chaque enfant, avec beaucoup de patience et de bienveillance.';
+  const sentence2Options = ageGroups.length
+    ? [
+        `J’accompagne avec attention ${ageGroups.join(', ')} et je m’adapte au rythme de chaque enfant.`,
+        `Mon expérience auprès de ${ageGroups.join(', ')} me permet de proposer un accompagnement adapté et rassurant.`,
+        `Je veille au bien-être de ${ageGroups.join(', ')} en respectant leurs besoins et leurs habitudes.`,
+      ]
+    : [
+        'Je m’adapte au rythme et aux besoins de chaque enfant, avec beaucoup de patience et de bienveillance.',
+        'J’accorde une grande importance à la sécurité, à l’écoute et au respect du rythme de chaque enfant.',
+        'Mon objectif est de créer un environnement calme, joyeux et rassurant pour les enfants.',
+      ];
 
-  const sentence3 = languages?.length
-    ? `Je parle ${languages.join(', ')} et propose des activités ludiques et éducatives adaptées à son âge.`
-    : 'Je propose des activités ludiques et éducatives adaptées à l’âge de l’enfant.';
+  const sentence3Options = languages?.length
+    ? [
+        `Je parle ${languages.join(', ')} et propose des activités ludiques et éducatives adaptées à son âge.`,
+        `Grâce à mes langues (${languages.join(', ')}), je facilite les échanges avec les enfants et leurs parents.`,
+        `J’aime organiser des jeux et activités éducatives, en français, ${languages.slice(1).join(', ') || 'arabe'}.`,
+      ]
+    : [
+        'Je propose des activités ludiques et éducatives adaptées à l’âge de l’enfant.',
+        'J’aime partager des jeux créatifs, des lectures et des activités adaptées à chaque âge.',
+        'Je peux accompagner les enfants dans leurs jeux, leurs devoirs et leurs routines quotidiennes.',
+      ];
+
+  const sentence1 = sentence1Options[getVariationIndex(variationKey, sentence1Options.length)];
+  const sentence2 = sentence2Options[getVariationIndex(`${variationKey}-2`, sentence2Options.length)];
+  const sentence3 = sentence3Options[getVariationIndex(`${variationKey}-3`, sentence3Options.length)];
 
   return [sentence1, sentence2, sentence3].join(' ');
 };
