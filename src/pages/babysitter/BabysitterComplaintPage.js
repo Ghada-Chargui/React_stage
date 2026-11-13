@@ -83,6 +83,7 @@ function BabysitterComplaintPage() {
 
   useEffect(() => {
     loadComplaints();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.id]);
 
   const livePriority = useMemo(

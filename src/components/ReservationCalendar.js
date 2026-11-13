@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { MONTH_NAMES_FR, WEEKDAY_NAMES_FR, buildMonthGrid, toDateKey, todayKey } from '../utils/calendarUtils';
+import { MONTH_NAMES_FR, WEEKDAY_NAMES_FR, buildMonthGrid, todayKey } from '../utils/calendarUtils';
 
 const STATUS_DOT_COLOR = {
   'en attente': 'bg-amber-500',
